@@ -30,6 +30,10 @@ What happened instead?
 - Browser or runtime:
 - Version or commit:
 
+## Impact
+
+Who is affected and how severe is the issue?
+
 ## Additional Context
 
-Do not include secrets, private customer data, or access tokens.
+Do not include secrets, private customer data, personally identifiable information, or access tokens.

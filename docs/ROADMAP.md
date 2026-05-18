@@ -2,23 +2,32 @@
 
 ## Status
 
-Planned
+In Development / MVP
 
-## Phase 1: Foundation
+## Phase 1: Product Foundation
 
-- Select framework, database, authentication, and deployment platform.
-- Define organization, user, lead, conversation, and appointment data models.
-- Add local development, linting, testing, and CI.
+- Confirm target user and first use case.
+- Define data model, environment variables, and security boundaries.
+- Create the first UI or API skeleton.
+- Add test strategy and deployment assumptions.
 
-## Phase 2: MVP
+## Phase 2: MVP Demo
 
-- Build dashboard shell and protected routes.
-- Add lead capture and conversation records.
-- Add basic AI-assisted lead qualification.
-- Add documentation for setup and deployment.
+- Implement the core workflow: Create a dashboard shell with lead, conversation, and automation module views.
+- Add realistic sample data and public-safe examples.
+- Add screenshots or a short demo video.
+- Validate the workflow with at least one business scenario.
 
-## Phase 3: Product Expansion
+## Phase 3: Trust And Integrations
 
-- Add website chat and WhatsApp integrations.
-- Add appointment automation.
-- Add analytics, audit logs, and human handoff workflows.
+- Add authentication or protected access where needed.
+- Add integration placeholders or provider adapters.
+- Add monitoring, logging, error handling, and abuse controls.
+- Improve responsible AI notes, human review paths, and explainability.
+
+## Phase 4: Product Readiness
+
+- Add automated tests and setup verification.
+- Finalize deployment documentation.
+- Review security and privacy posture.
+- Decide whether status should move to Demo Ready, In Development, or Production Ready.

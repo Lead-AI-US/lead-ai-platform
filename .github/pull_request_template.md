@@ -1,14 +1,19 @@
 ## Summary
 
-What changed?
+What changed and why?
 
-## Checklist
+## Product Impact
 
 - [ ] README or docs updated if behavior changed.
-- [ ] Setup commands still work or are clearly marked as planned.
-- [ ] No secrets, credentials, or private customer data included.
-- [ ] Security and authorization impact reviewed.
-- [ ] Project status remains honest.
+- [ ] Product status remains honest.
+- [ ] Setup commands are real or clearly marked as planned.
+- [ ] Screenshots or demo links are accurate if included.
+
+## Security And Responsible AI
+
+- [ ] No secrets, credentials, `.env` files, private customer data, or PII included.
+- [ ] Input validation and authorization impact reviewed.
+- [ ] AI limitations, human handoff, or explainability concerns reviewed.
 
 ## Testing
 

@@ -2,19 +2,37 @@
 
 ## Status
 
-Planned
+In Development / MVP
 
-Security controls must be reviewed again when application code is added.
+Security controls must be reviewed again when implementation code, integrations, or deployment configuration are added.
 
-## Requirements
+## Baseline Rules
 
-- Do not commit secrets, API keys, access tokens, `.env` files, or customer exports.
-- Document required configuration in `.env.example`.
-- Validate all API inputs.
+- Never commit secrets, API keys, tokens, private credentials, `.env` files, customer exports, or private datasets.
+- Use `.env.example` for placeholder configuration names only.
+- Validate all user input before storage, scoring, AI processing, or external API calls.
 - Do not log personally identifiable information or private customer data.
-- Scope all protected data by authenticated user, organization, and role.
-- Review AI workflows for data access boundaries and human handoff paths.
+- Add authentication and authorization before handling protected business data.
+- Review dependencies and provider integrations before public demos.
 
-## Reporting
+## Product-Specific Risks
 
-Report security concerns privately to the maintainer before public disclosure.
+- Scope protected data by authenticated organization and role.
+- Review integrations before enabling customer data sync.
+- Keep AI outputs auditable without logging private content.
+
+## Responsible AI Controls
+
+- Make limitations clear to users.
+- Avoid unsupported accuracy or reliability claims.
+- Provide human handoff or review for sensitive, uncertain, or high-impact workflows.
+- Prefer explainable factors for scores, summaries, and recommendations.
+
+## Security Review Checklist
+
+- [ ] Secret scan completed.
+- [ ] `.env.example` is accurate.
+- [ ] Input validation documented.
+- [ ] Auth and authorization expectations documented.
+- [ ] Logging reviewed for private data exposure.
+- [ ] Responsible AI limitations documented.

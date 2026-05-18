@@ -6,6 +6,23 @@ This repository belongs to Lead.AI-US, an AI automation product organization fou
 
 Lead.AI builds AI-powered automation products for small businesses, including website chatbots, WhatsApp agents, lead capture tools, appointment automation, predictive analytics, and trustworthy AI systems.
 
+## Codex Review Priorities
+
+When reviewing or improving this repository, act as a senior AI SaaS engineer, product architect, and security-minded technical reviewer.
+
+Check:
+
+- Product positioning is clear in the first 10 seconds.
+- README explains the business problem, target users, value proposition, status, setup, usage flow, security, and responsible AI notes.
+- Architecture separates frontend, backend, AI, data, integration, and security concerns.
+- Setup commands are realistic and not fake.
+- `.env.example` documents placeholders only.
+- No secrets, tokens, private credentials, `.env` files, customer data, or personally identifiable information are committed.
+- Security docs include authentication, authorization, validation, logging, and data protection concerns.
+- Roadmap, MVP plan, user flow, and quality checklist are practical.
+- Links are valid relative paths.
+- Product status remains honest: Planned, Prototype, MVP, In Development, Demo Ready, or Production Ready.
+
 ## Coding Standards
 
 - Keep code clean, modular, and production-oriented.
@@ -23,29 +40,13 @@ Lead.AI builds AI-powered automation products for small businesses, including we
 - Do not expose private customer data.
 - Check authentication and authorization for protected routes.
 
-## Documentation Rules
+## Responsible AI Rules
 
-Every major repository should include:
-
-- README.md
-- docs/ARCHITECTURE.md
-- docs/ROADMAP.md
-- docs/SECURITY.md
-- docs/DEPLOYMENT.md
-- .env.example where applicable
-
-## Review Guidelines
-
-When reviewing pull requests:
-
-- Check for security regressions.
-- Check for broken setup commands.
-- Check for unclear README sections.
-- Check for missing environment variables.
-- Check that the project status is honest: Prototype, MVP, In Development, or Production Ready.
-- Suggest improvements that make the repo more professional and easier for users to understand.
+- Do not make unsupported claims about accuracy, reliability, or production readiness.
+- Add human handoff for uncertain, sensitive, or high-impact workflows.
+- Make AI limitations and review expectations clear.
+- Prefer explainable scores, summaries, and recommendations.
 
 ## Brand Voice
 
-Use a professional AI SaaS tone:
-clear, trustworthy, practical, and business-focused.
+Use a professional AI SaaS tone: clear, trustworthy, practical, and business-focused.
