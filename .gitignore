@@ -13,3 +13,9 @@ __pycache__/
 venv/
 .DS_Store
 *.log
+*.tsbuildinfo
+.vercel
+firebase-debug.log
+firestore-debug.log
+ui-debug.log
+.firebase/

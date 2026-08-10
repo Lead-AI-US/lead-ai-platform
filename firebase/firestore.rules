@@ -1,0 +1,86 @@
+rules_version = '2';
+
+// Lead.AI Platform — Firestore Security Rules
+//
+// Principle: the client SDK gets READ access to what a workspace member is
+// allowed to see (for realtime dashboard UX), and NO direct write access to
+// customer-domain data. All mutations go through the authenticated API
+// (api/*.ts), which uses the Firebase Admin SDK (bypasses these rules
+// entirely) and additionally enforces role checks beyond plain membership
+// (e.g. "admin" for knowledge approval), audit logging, and validation that
+// rules alone can't express. See docs/AUTHORIZATION.md.
+//
+// Membership — not a role/owner flag from the client — is the only thing
+// these rules trust, and even that is read from Firestore itself
+// (workspaceMembers), never from the request.
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isActiveMember(workspaceId) {
+      let memberId = workspaceId + '_' + request.auth.uid;
+      return isSignedIn()
+        && exists(/databases/$(database)/documents/workspaceMembers/$(memberId))
+        && get(/databases/$(database)/documents/workspaceMembers/$(memberId)).data.status == 'active';
+    }
+
+    match /users/{uid} {
+      allow read, write: if isSignedIn() && request.auth.uid == uid;
+    }
+
+    match /workspaceMembers/{memberId} {
+      // A user may only read their OWN membership records (used by
+      // WorkspaceProvider's `where userId == uid` query) — never another
+      // user's membership, and never write (server-managed).
+      allow read: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow write: if false;
+    }
+
+    match /workspaces/{workspaceId} {
+      allow read: if isActiveMember(workspaceId);
+      allow write: if false;
+
+      match /leads/{leadId} {
+        allow read: if isActiveMember(workspaceId);
+        allow write: if false;
+      }
+
+      match /knowledgeSources/{sourceId} {
+        allow read: if isActiveMember(workspaceId);
+        allow write: if false;
+      }
+
+      match /conversations/{conversationId} {
+        allow read: if isActiveMember(workspaceId);
+        allow write: if false;
+
+        match /messages/{messageId} {
+          allow read: if isActiveMember(workspaceId);
+          allow write: if false;
+        }
+      }
+
+      // Server-only: read via the aggregated /api/.../analytics/summary
+      // endpoint, never raw client reads.
+      match /analyticsEvents/{eventId} {
+        allow read, write: if false;
+      }
+
+      match /auditLogs/{entryId} {
+        allow read, write: if false;
+      }
+
+      match /rateLimits/{key} {
+        allow read, write: if false;
+      }
+    }
+
+    // Deny everything else by default.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
