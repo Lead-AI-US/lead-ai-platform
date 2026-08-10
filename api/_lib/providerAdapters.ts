@@ -1,4 +1,4 @@
-import { EXTERNAL_PROVIDER_IDS, providerLabel, type ExternalProvider } from "../../src/lib/integrations";
+import { EXTERNAL_PROVIDER_IDS, providerLabel, type ExternalProvider } from "../../src/lib/integrations.js";
 
 export type ProviderAuthState = "authenticated" | "not_configured" | "error";
 

@@ -1,10 +1,10 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import type { Query, DocumentData } from "firebase-admin/firestore";
-import { getAdminDb } from "@/lib/firebase/admin";
-import { requireWorkspaceRole } from "@/lib/auth/serverAuth";
-import { getPathParam, safeServerError } from "@/lib/http/apiHelpers";
-import { parseTimeRange, cutoffIsoForRange } from "@/lib/analytics/timeRange";
-import type { AnalyticsSummary } from "@/types/analytics";
+import { getAdminDb } from "../../../../src/lib/firebase/admin.js";
+import { requireWorkspaceRole } from "../../../../src/lib/auth/serverAuth.js";
+import { getPathParam, safeServerError } from "../../../../src/lib/http/apiHelpers.js";
+import { parseTimeRange, cutoffIsoForRange } from "../../../../src/lib/analytics/timeRange.js";
+import type { AnalyticsSummary } from "../../../../src/types/analytics.js";
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== "GET") {

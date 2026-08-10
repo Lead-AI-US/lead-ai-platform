@@ -16,12 +16,12 @@
  * a live OpenAI key - see src/lib/ai/orchestrator.test.ts. In production,
  * api/chat.ts calls this with the default (real) adapter.
  */
-import { AssistantDecisionSchema, type AssistantDecision } from "@/types/ai";
-import type { KnowledgeSource } from "@/types/knowledge";
-import { isHostileRequest, SECURITY_REFUSAL_RESPONSE } from "./securityPreCheck";
-import { buildSystemPrompt, UNKNOWN_INFO_RESPONSE } from "./prompt";
-import { validateAssistantDecision, POLICY_FALLBACK_RESPONSE } from "./policyValidate";
-import { callAssistantModel } from "./openaiClient";
+import { AssistantDecisionSchema, type AssistantDecision } from "../../types/ai.js";
+import type { KnowledgeSource } from "../../types/knowledge.js";
+import { isHostileRequest, SECURITY_REFUSAL_RESPONSE } from "./securityPreCheck.js";
+import { buildSystemPrompt, UNKNOWN_INFO_RESPONSE } from "./prompt.js";
+import { validateAssistantDecision, POLICY_FALLBACK_RESPONSE } from "./policyValidate.js";
+import { callAssistantModel } from "./openaiClient.js";
 
 export type ModelCaller = typeof callAssistantModel;
 

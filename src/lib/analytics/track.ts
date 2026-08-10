@@ -9,8 +9,8 @@
  * 3. FAIL-SAFE — a tracking failure must never break the business action
  *    that triggered it (a chat reply, a lead creation).
  */
-import { getAdminDb } from "@/lib/firebase/admin";
-import type { AnalyticsEvent, AnalyticsEventName, ActorType } from "@/types/analytics";
+import { getAdminDb } from "../firebase/admin.js";
+import type { AnalyticsEvent, AnalyticsEventName, ActorType } from "../../types/analytics.js";
 
 const ALLOWED_PROP_KEYS = new Set([
   "source",

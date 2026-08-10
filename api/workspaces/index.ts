@@ -1,12 +1,12 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
-import { getAdminDb } from "@/lib/firebase/admin";
-import { requireFirebaseUser } from "@/lib/auth/serverAuth";
-import { OnboardingSchema, slugify } from "@/lib/validation/onboarding";
-import { parseBody, safeServerError } from "@/lib/http/apiHelpers";
-import { generatePublicWidgetKey } from "@/lib/workspace/widgetKey";
-import { workspaceMemberDocId, type Workspace, type WorkspaceMember } from "@/types/workspace";
-import { trackEvent } from "@/lib/analytics/track";
-import { recordAuditEvent } from "@/lib/audit/log";
+import { getAdminDb } from "../../src/lib/firebase/admin.js";
+import { requireFirebaseUser } from "../../src/lib/auth/serverAuth.js";
+import { OnboardingSchema, slugify } from "../../src/lib/validation/onboarding.js";
+import { parseBody, safeServerError } from "../../src/lib/http/apiHelpers.js";
+import { generatePublicWidgetKey } from "../../src/lib/workspace/widgetKey.js";
+import { workspaceMemberDocId, type Workspace, type WorkspaceMember } from "../../src/types/workspace.js";
+import { trackEvent } from "../../src/lib/analytics/track.js";
+import { recordAuditEvent } from "../../src/lib/audit/log.js";
 
 /**
  * POST /api/workspaces — onboarding: creates a workspace and its owner

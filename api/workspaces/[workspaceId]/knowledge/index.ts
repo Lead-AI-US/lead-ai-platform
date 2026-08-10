@@ -1,9 +1,9 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
-import { getAdminDb } from "@/lib/firebase/admin";
-import { requireWorkspaceRole } from "@/lib/auth/serverAuth";
-import { getPathParam, parseBody, safeServerError } from "@/lib/http/apiHelpers";
-import { CreateKnowledgeSchema } from "@/lib/validation/knowledge";
-import type { KnowledgeSource } from "@/types/knowledge";
+import { getAdminDb } from "../../../../src/lib/firebase/admin.js";
+import { requireWorkspaceRole } from "../../../../src/lib/auth/serverAuth.js";
+import { getPathParam, parseBody, safeServerError } from "../../../../src/lib/http/apiHelpers.js";
+import { CreateKnowledgeSchema } from "../../../../src/lib/validation/knowledge.js";
+import type { KnowledgeSource } from "../../../../src/types/knowledge.js";
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   const workspaceId = getPathParam(req, "workspaceId");

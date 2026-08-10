@@ -1,10 +1,10 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
-import { getAdminDb } from "@/lib/firebase/admin";
-import { requireWorkspaceRole } from "@/lib/auth/serverAuth";
-import { getPathParam, parseBody, safeServerError } from "@/lib/http/apiHelpers";
-import { UpdateKnowledgeStatusSchema } from "@/lib/validation/knowledge";
-import { recordAuditEvent } from "@/lib/audit/log";
-import { trackEvent } from "@/lib/analytics/track";
+import { getAdminDb } from "../../../../src/lib/firebase/admin.js";
+import { requireWorkspaceRole } from "../../../../src/lib/auth/serverAuth.js";
+import { getPathParam, parseBody, safeServerError } from "../../../../src/lib/http/apiHelpers.js";
+import { UpdateKnowledgeStatusSchema } from "../../../../src/lib/validation/knowledge.js";
+import { recordAuditEvent } from "../../../../src/lib/audit/log.js";
+import { trackEvent } from "../../../../src/lib/analytics/track.js";
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== "PATCH") {
