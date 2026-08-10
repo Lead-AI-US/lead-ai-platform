@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
-import { aiAssetSchema, isAssetVisibleToWorkspace } from "@/lib/aiAssets";
+import { aiAssetSchema, groupAssetsByType, isAssetVisibleToWorkspace } from "@/lib/aiAssets";
 import { createCommandRegistry, searchCommands } from "@/lib/commandRegistry";
-import { mapIntegrationToHealth, integrationMetadataSchema } from "@/lib/integrations";
+import { isIntegrationVisibleToWorkspace, mapIntegrationToHealth, integrationMetadataSchema } from "@/lib/integrations";
 import { navigationGroups } from "@/lib/navigation";
 
 describe("Product Pro navigation", () => {
@@ -64,6 +64,18 @@ describe("Product Pro integration metadata", () => {
     expect(health.status).toBe("not_configured");
     expect(health.configured).toBe(false);
   });
+
+  it("preserves tenant isolation for provider metadata", () => {
+    const integration = integrationMetadataSchema.parse({
+      id: "github",
+      workspaceId: "ws_a",
+      provider: "github",
+      status: "not_configured",
+    });
+
+    expect(isIntegrationVisibleToWorkspace(integration, "ws_a")).toBe(true);
+    expect(isIntegrationVisibleToWorkspace(integration, "ws_b")).toBe(false);
+  });
 });
 
 describe("Product Pro AI assets", () => {
@@ -83,5 +95,38 @@ describe("Product Pro AI assets", () => {
 
     expect(isAssetVisibleToWorkspace(asset, "ws_a")).toBe(true);
     expect(isAssetVisibleToWorkspace(asset, "ws_b")).toBe(false);
+  });
+
+  it("groups AI asset metadata without mixing asset types", () => {
+    const assets = [
+      aiAssetSchema.parse({
+        id: "asset_1",
+        workspaceId: "ws_a",
+        provider: "github",
+        type: "repository",
+        externalId: "lead-ai/repo",
+        title: "Repository",
+        status: "active",
+        createdAt: "2026-08-10T00:00:00.000Z",
+        updatedAt: "2026-08-10T00:00:00.000Z",
+      }),
+      aiAssetSchema.parse({
+        id: "asset_2",
+        workspaceId: "ws_a",
+        provider: "kaggle",
+        type: "notebook",
+        externalId: "lead-ai/notebook",
+        title: "Notebook",
+        status: "active",
+        createdAt: "2026-08-10T00:00:00.000Z",
+        updatedAt: "2026-08-10T00:00:00.000Z",
+      }),
+    ];
+
+    const groups = groupAssetsByType(assets);
+
+    expect(groups.repository).toHaveLength(1);
+    expect(groups.notebook).toHaveLength(1);
+    expect(groups.model).toHaveLength(0);
   });
 });
