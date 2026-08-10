@@ -198,7 +198,7 @@ checked.
 | Prompt Injection Defense | GREEN, tested |
 | Human Handoff | GREEN (orchestration), NOT VERIFIED (HTTP-level integration) |
 | Conversation Persistence | GREEN (code), NOT VERIFIED live |
-| Tenant Isolation | GREEN (structural + rules), BLOCKED (rules unexecuted locally) |
+| Tenant Isolation | GREEN — structural + rules, verified in CI |
 | Real Analytics | GREEN (code + tests), BLOCKED (no live data) |
 | Zero-State Analytics | GREEN |
 | Typecheck | GREEN |
