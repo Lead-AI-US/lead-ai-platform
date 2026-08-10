@@ -8,6 +8,23 @@ export default defineConfig({
     port: 5173,
   },
   plugins: [react()],
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (id.includes("node_modules/react") || id.includes("node_modules/react-dom") || id.includes("node_modules/react-router-dom")) {
+            return "react-vendor";
+          }
+          if (id.includes("node_modules/firebase")) {
+            return "firebase-vendor";
+          }
+          if (id.includes("node_modules/lucide-react")) {
+            return "icons";
+          }
+        },
+      },
+    },
+  },
   resolve: {
     alias: {
       "@": path.resolve(import.meta.dirname, "./src"),

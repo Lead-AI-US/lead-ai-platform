@@ -35,7 +35,11 @@ export default function Analytics() {
 
   return (
     <div>
-      <PageHeader title="Analytics" description="Real events only — nothing here is a demo number." />
+      <PageHeader
+        eyebrow="Insights"
+        title="Analytics"
+        description="Real persisted analytics events only. Test events are excluded by the server summary."
+      />
 
       <div className="mb-4 flex gap-2">
         {RANGES.map((r) => (
@@ -61,7 +65,7 @@ export default function Analytics() {
           </div>
           <Card>
             <CardHeader>
-              <CardTitle>Funnel</CardTitle>
+              <CardTitle>Workspace funnel</CardTitle>
             </CardHeader>
             <CardContent className="flex flex-col gap-2">
               {summary.funnel.map((step) => (

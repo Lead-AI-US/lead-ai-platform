@@ -26,7 +26,11 @@ export default function Conversations() {
   useEffect(() => {
     if (!workspace || !db) return;
     const q = query(collection(db, "workspaces", workspace.id, "conversations"), orderBy("updatedAt", "desc"));
-    return onSnapshot(q, (snap) => setConversations(snap.docs.map((d) => d.data() as Conversation)));
+    return onSnapshot(q, (snap) => {
+      const next = snap.docs.map((d) => d.data() as Conversation);
+      setConversations(next);
+      setSelectedId((current) => current ?? next[0]?.id ?? null);
+    });
   }, [workspace]);
 
   const sorted = conversations
@@ -37,7 +41,11 @@ export default function Conversations() {
 
   return (
     <div>
-      <PageHeader title="Conversations" description="Needs Human first, then Active, then Resolved." />
+      <PageHeader
+        eyebrow="Inbox"
+        title="Conversations"
+        description="Needs Human first, then Active, then Resolved. Messages are read from this workspace only."
+      />
 
       {sorted === null ? (
         <p className="text-sm text-muted-foreground">Loading…</p>
@@ -56,7 +64,7 @@ export default function Conversations() {
                 )}
               >
                 <div className="flex items-center justify-between">
-                  <span className="font-medium">{c.id.slice(0, 8)}…</span>
+                <span className="font-medium">{c.id.slice(0, 8)}</span>
                   <Badge tone={STATUS_TONE[c.status]}>{c.status.replace("_", " ")}</Badge>
                 </div>
                 <p className="text-xs text-muted-foreground">Updated {new Date(c.updatedAt).toLocaleString()}</p>
