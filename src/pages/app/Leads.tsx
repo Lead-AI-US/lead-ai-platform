@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { collection, onSnapshot, orderBy, query } from "firebase/firestore";
+import { Link } from "react-router-dom";
 import { Search, Users } from "lucide-react";
 import { db } from "@/lib/firebase/client";
 import { useWorkspace } from "@/lib/workspace/WorkspaceProvider";
@@ -96,6 +97,7 @@ export default function Leads() {
                 <th className="p-3 font-medium">Name / contact</th>
                 <th className="p-3 font-medium">Message</th>
                 <th className="p-3 font-medium">Source</th>
+                <th className="p-3 font-medium">Conversation</th>
                 <th className="p-3 font-medium">Status</th>
               </tr>
             </thead>
@@ -109,6 +111,15 @@ export default function Leads() {
                   <td className="max-w-xs truncate p-3 text-muted-foreground">{lead.message || "—"}</td>
                   <td className="p-3">
                     <Badge>{lead.source === "website_chat" ? "Website chat" : "Manual"}</Badge>
+                  </td>
+                  <td className="p-3">
+                    {lead.conversationId ? (
+                      <Link to="/app/conversations" className="text-xs font-medium text-primary underline">
+                        Open inbox
+                      </Link>
+                    ) : (
+                      <span className="text-xs text-muted-foreground">No conversation</span>
+                    )}
                   </td>
                   <td className="p-3">
                     <select

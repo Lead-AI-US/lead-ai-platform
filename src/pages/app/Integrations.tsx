@@ -4,45 +4,33 @@ import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 import { db } from "@/lib/firebase/client";
-import { providerLabel, integrationStatusLabel, type IntegrationMetadata } from "@/lib/integrations";
+import {
+  createDefaultProviderIntegrations,
+  integrationStatusLabel,
+  mapIntegrationToHealth,
+  providerDefinition,
+  providerLabel,
+  type IntegrationMetadata,
+} from "@/lib/integrations";
 import { useWorkspace } from "@/lib/workspace/WorkspaceProvider";
 
-const providerCopy: Record<IntegrationMetadata["provider"], { purpose: string; icon: typeof Github }> = {
-  firebase: { purpose: "Authentication, workspace data, Firestore rules, and tenant-scoped records.", icon: Database },
-  github: { purpose: "Repository and CI visibility for engineering workflows.", icon: Github },
-  huggingface: { purpose: "Model, dataset, and Space references for AI asset management.", icon: PlugZap },
-  kaggle: { purpose: "Dataset and notebook references for data experimentation.", icon: PlugZap },
-  openai: { purpose: "Server-side AI orchestration for chat responses and summaries.", icon: KeyRound },
-  website_widget: { purpose: "Allowed origins and widget installation for website chat.", icon: Globe2 },
+const providerCopy: Record<IntegrationMetadata["provider"], { icon: typeof Github }> = {
+  firebase: { icon: Database },
+  github: { icon: Github },
+  huggingface: { icon: PlugZap },
+  kaggle: { icon: PlugZap },
+  openai: { icon: KeyRound },
+  website_widget: { icon: Globe2 },
 };
 
 export default function Integrations() {
   const { workspace } = useWorkspace();
   if (!workspace) return null;
 
-  const integrations: IntegrationMetadata[] = [
-    {
-      id: "firebase-client",
-      workspaceId: workspace.id,
-      provider: "firebase",
-      status: db ? "connected" : "configuration_required",
-    },
-    {
-      id: "openai-server",
-      workspaceId: workspace.id,
-      provider: "openai",
-      status: "unknown",
-    },
-    {
-      id: "website-widget",
-      workspaceId: workspace.id,
-      provider: "website_widget",
-      status: workspace.allowedOrigins.length ? "connected" : "configuration_required",
-    },
-    { id: "github", workspaceId: workspace.id, provider: "github", status: "not_configured" },
-    { id: "huggingface", workspaceId: workspace.id, provider: "huggingface", status: "not_configured" },
-    { id: "kaggle", workspaceId: workspace.id, provider: "kaggle", status: "not_configured" },
-  ];
+  const integrations = createDefaultProviderIntegrations(workspace.id, {
+    firebaseConfigured: Boolean(db),
+    allowedOrigins: workspace.allowedOrigins,
+  });
 
   return (
     <div>
@@ -53,6 +41,8 @@ export default function Integrations() {
       />
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
         {integrations.map((integration) => {
+          const health = mapIntegrationToHealth(integration);
+          const definition = providerDefinition(integration.provider);
           const Icon = providerCopy[integration.provider].icon;
           return (
             <Card key={integration.id}>
@@ -62,18 +52,39 @@ export default function Integrations() {
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                <p className="text-sm text-muted-foreground">{providerCopy[integration.provider].purpose}</p>
-                <Badge tone={toneForStatus(integration.status)}>{integrationStatusLabel(integration.status)}</Badge>
-                <div>
-                  <Button type="button" variant="secondary" disabled>
-                    Connect flow not configured
-                  </Button>
-                </div>
+                <p className="text-sm text-muted-foreground">{definition.purpose}</p>
+                <dl className="grid gap-3 text-sm">
+                  <Detail label="What it is" value={definition.assetTypes.length ? definition.assetTypes.join(", ") : "Platform service"} />
+                  <Detail label="Connected" value={integrationStatusLabel(integration.status)} tone={toneForStatus(integration.status)} />
+                  <Detail label="Account" value={integration.accountLabel ?? "Not connected"} />
+                  <Detail label="Last verified" value={integration.lastCheckedAt ?? "Not checked"} />
+                  <Detail label="Next action" value={health.nextAction ?? "Verify provider health"} />
+                </dl>
+                <Button type="button" variant="secondary" disabled={integration.status !== "connected"}>
+                  {integration.status === "connected" ? "Manage connection" : "Connect flow not configured"}
+                </Button>
               </CardContent>
             </Card>
           );
         })}
       </div>
+    </div>
+  );
+}
+
+function Detail({
+  label,
+  value,
+  tone,
+}: {
+  label: string;
+  value: string;
+  tone?: "neutral" | "warning" | "success" | "danger";
+}) {
+  return (
+    <div className="rounded-md border border-border p-3">
+      <dt className="text-xs font-semibold uppercase text-muted-foreground">{label}</dt>
+      <dd className="mt-1 break-words">{tone ? <Badge tone={tone}>{value}</Badge> : value}</dd>
     </div>
   );
 }
