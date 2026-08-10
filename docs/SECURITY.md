@@ -42,13 +42,13 @@ Two independent layers:
    query across workspaces.
 2. **Firestore Security Rules** (`firebase/firestore.rules`) — defense in
    depth in case a client ever queries Firestore directly with a malformed
-   or forged path. Rules tests exist (`src/test/firestoreRules.rules.test.ts`)
-   proving Workspace A cannot read Workspace B's workspace doc, leads, or
-   another user's `users/{uid}` profile — **written and ready, but not
-   executable in this sandbox** (the Firestore emulator requires JDK 21+;
-   this environment has Java 8). BLOCKED ON CONFIGURATION, not skipped by
-   choice — see `docs/LOCAL_DEVELOPMENT.md` and the `rules-tests` CI job,
-   which does have a real JDK.
+   or forged path. Rules tests (`src/test/firestoreRules.rules.test.ts`)
+   prove Workspace A cannot read Workspace B's workspace doc, leads, or
+   another user's `users/{uid}` profile. This local sandbox's Java 8 is too
+   old for the Firestore emulator (needs 21+), but the `rules-tests` CI job
+   (real JDK 21) ran them for real on PR #7: **7/7 passed** — see
+   `docs/LOCAL_DEVELOPMENT.md` for the local setup and
+   `docs/MVP_VERIFICATION.md` for the CI run link.
 
 ## CORS
 
