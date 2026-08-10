@@ -22,6 +22,14 @@ npm test                           → 10 files, 83/83 tests passing
 npm run build                      → succeeds, 683 KB JS (177 KB gzip)
 ```
 
+**Update (post-push, PR #7 CI run [31350759898](https://github.com/Lead-AI-US/lead-ai-platform/actions/runs/31350759898)):**
+GitHub Actions' `rules-tests` job (real JDK 21, real Firestore emulator) ran
+`src/test/firestoreRules.rules.test.ts` for real: **7/7 passed** in 2.96s.
+This closes the one gap this local sandbox (Java 8) couldn't verify — see
+the "Firestore Rules / Security Tests" section below, now GREEN with CI
+evidence, not just written-and-untested. The `build` job (typecheck, lint,
+test, build) also passed in CI.
+
 One real bug was found and fixed by this test suite: the security
 pre-router's `\bapi[\s_-]?key\b` regex never matched `OPENAI_API_KEY`
 because `_` is a word character, so there's no `\b` boundary inside the
