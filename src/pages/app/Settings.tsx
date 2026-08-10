@@ -42,7 +42,11 @@ export default function Settings() {
 
   return (
     <div className="space-y-6">
-      <PageHeader title="Settings" description="Workspace configuration and widget install." />
+      <PageHeader
+        eyebrow="Settings"
+        title="Settings"
+        description="Workspace configuration, widget installation, security posture, and developer setup."
+      />
 
       <Card>
         <CardHeader>
@@ -69,13 +73,9 @@ export default function Settings() {
             ))}
           </div>
           {canManage && (
-            <form onSubmit={addOrigin} className="flex gap-2">
-              <Input
-                placeholder="https://example-business.com"
-                value={newOrigin}
-                onChange={(e) => setNewOrigin(e.target.value)}
-                required
-              />
+            <form onSubmit={addOrigin} className="flex flex-col gap-2 sm:flex-row">
+              <label className="sr-only" htmlFor="allowed-origin">Allowed origin</label>
+              <Input id="allowed-origin" placeholder="https://example-business.com" value={newOrigin} onChange={(e) => setNewOrigin(e.target.value)} required />
               <Button type="submit" disabled={saving}>
                 Add
               </Button>
@@ -96,6 +96,17 @@ export default function Settings() {
           <pre className="overflow-x-auto rounded-md bg-muted p-3 text-xs">
             <code>{widgetSnippet(workspace.publicWidgetKey)}</code>
           </pre>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Security</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-2 text-sm text-muted-foreground">
+          <p>Authentication is handled by Firebase Auth and server-verified tokens.</p>
+          <p>Workspace data remains tenant-scoped by workspace membership and Firestore rules.</p>
+          <p>Provider secrets must stay server-side and are not exposed in this UI.</p>
         </CardContent>
       </Card>
     </div>

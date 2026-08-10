@@ -25,6 +25,7 @@ export default function Knowledge() {
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [statusFilter, setStatusFilter] = useState<KnowledgeStatus | "all">("all");
   const canManage = role ? roleAtLeast(role, "admin") : false;
 
   useEffect(() => {
@@ -34,6 +35,7 @@ export default function Knowledge() {
   }, [workspace]);
 
   if (!workspace) return null;
+  const visibleItems = items?.filter((item) => statusFilter === "all" || item.status === statusFilter) ?? null;
 
   async function handleCreate(e: FormEvent) {
     e.preventDefault();
@@ -58,11 +60,33 @@ export default function Knowledge() {
         description="Only approved knowledge is ever used by the AI assistant. Drafts and archived entries are never included."
       />
 
+      <div className="mb-4 inline-flex flex-wrap gap-1 rounded-lg border border-border bg-card p-1" role="tablist" aria-label="Knowledge status">
+        {(["all", "draft", "approved", "archived"] as const).map((item) => (
+          <button
+            key={item}
+            type="button"
+            role="tab"
+            aria-selected={statusFilter === item}
+            onClick={() => setStatusFilter(item)}
+            className={`rounded-md px-3 py-1.5 text-sm capitalize focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary ${
+              statusFilter === item ? "bg-muted text-foreground" : "text-muted-foreground hover:bg-muted"
+            }`}
+          >
+            {item}
+          </button>
+        ))}
+      </div>
+
       {canManage && (
         <Card className="mb-6">
           <CardContent className="pt-4">
             <form onSubmit={handleCreate} className="flex flex-col gap-3">
-              <Input placeholder="Title (e.g. Business hours)" required value={title} onChange={(e) => setTitle(e.target.value)} />
+              <label className="grid gap-1 text-sm font-medium">
+                Title
+                <Input placeholder="Business hours" required value={title} onChange={(e) => setTitle(e.target.value)} />
+              </label>
+              <label className="grid gap-1 text-sm font-medium">
+                Content
               <textarea
                 required
                 placeholder="Content the assistant is allowed to state as fact"
@@ -71,6 +95,7 @@ export default function Knowledge() {
                 rows={3}
                 className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm placeholder:text-muted-foreground"
               />
+              </label>
               <Button type="submit" disabled={submitting} className="self-start">
                 {submitting ? "Adding…" : "Add as draft"}
               </Button>
@@ -81,11 +106,11 @@ export default function Knowledge() {
 
       {items === null ? (
         <p className="text-sm text-muted-foreground">Loading…</p>
-      ) : items.length === 0 ? (
+      ) : visibleItems?.length === 0 ? (
         <EmptyState icon={BookOpen} title="No knowledge yet" description="Add what your assistant is allowed to say about this business." />
       ) : (
         <div className="flex flex-col gap-3">
-          {items.map((item) => (
+          {visibleItems?.map((item) => (
             <Card key={item.id}>
               <CardContent className="flex flex-col gap-2 pt-4">
                 <div className="flex items-center justify-between">

@@ -1,16 +1,19 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { collection, getCountFromServer, query, where } from "firebase/firestore";
-import { Users, MessageCircleWarning, MessageSquare, PlugZap, AlertTriangle } from "lucide-react";
+import { Users, MessageCircleWarning, MessageSquare, PlugZap, AlertTriangle, BookOpen, GitBranch } from "lucide-react";
 import { db } from "@/lib/firebase/client";
 import { useWorkspace } from "@/lib/workspace/WorkspaceProvider";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 import { PageHeader } from "@/app/PageHeader";
+import { Badge } from "@/components/ui/Badge";
+import { formatDateTime } from "@/lib/format";
 
 interface Counts {
   newLeads: number;
   needsHuman: number;
   totalConversations: number;
+  approvedKnowledge: number;
 }
 
 /**
@@ -31,11 +34,13 @@ export default function Dashboard() {
       try {
         const leadsRef = collection(db!, "workspaces", workspace!.id, "leads");
         const conversationsRef = collection(db!, "workspaces", workspace!.id, "conversations");
+        const knowledgeRef = collection(db!, "workspaces", workspace!.id, "knowledgeSources");
 
-        const [newLeadsSnap, needsHumanSnap, totalConvSnap] = await Promise.all([
+        const [newLeadsSnap, needsHumanSnap, totalConvSnap, approvedKnowledgeSnap] = await Promise.all([
           getCountFromServer(query(leadsRef, where("status", "==", "new"))),
           getCountFromServer(query(conversationsRef, where("status", "==", "needs_human"))),
           getCountFromServer(conversationsRef),
+          getCountFromServer(query(knowledgeRef, where("status", "==", "approved"))),
         ]);
 
         if (cancelled) return;
@@ -43,6 +48,7 @@ export default function Dashboard() {
           newLeads: newLeadsSnap.data().count,
           needsHuman: needsHumanSnap.data().count,
           totalConversations: totalConvSnap.data().count,
+          approvedKnowledge: approvedKnowledgeSnap.data().count,
         });
       } catch {
         if (!cancelled) setError(true);
@@ -58,10 +64,41 @@ export default function Dashboard() {
   if (!workspace) return null;
 
   const widgetConfigured = workspace.allowedOrigins.length > 0;
+  const attention = [
+    ...(counts?.needsHuman ? [`${counts.needsHuman} conversation${counts.needsHuman === 1 ? "" : "s"} need a human`] : []),
+    ...(counts?.approvedKnowledge === 0 ? ["No approved knowledge is available for AI responses"] : []),
+    ...(!widgetConfigured ? ["Website widget origin is not configured"] : []),
+  ];
 
   return (
-    <div>
-      <PageHeader title="Dashboard" description={`Welcome back — here's what's happening in ${workspace.name}.`} />
+    <div className="space-y-6">
+      <PageHeader
+        eyebrow="Overview"
+        title="What needs attention?"
+        description={`Live workspace summary for ${workspace.name}. Counts come from workspace-scoped Firestore records.`}
+      />
+
+      <Card className="border-amber-500/30">
+        <CardHeader>
+          <CardTitle>Attention Required</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {counts === null && !error ? (
+            <p className="text-sm text-muted-foreground">Loading workspace attention…</p>
+          ) : attention.length ? (
+            <div className="flex flex-col gap-2">
+              {attention.map((item) => (
+                <div key={item} className="flex items-center gap-2 rounded-md bg-amber-500/10 p-3 text-sm">
+                  <AlertTriangle className="h-4 w-4 text-amber-600 dark:text-amber-400" aria-hidden="true" />
+                  {item}
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-sm text-muted-foreground">No attention items right now.</p>
+          )}
+        </CardContent>
+      </Card>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard icon={Users} label="New leads" value={counts?.newLeads} href="/app/leads" error={error} />
@@ -74,6 +111,10 @@ export default function Dashboard() {
           highlight={Boolean(counts?.needsHuman)}
         />
         <StatCard icon={MessageSquare} label="Conversations" value={counts?.totalConversations} href="/app/conversations" error={error} />
+        <StatCard icon={BookOpen} label="Approved knowledge" value={counts?.approvedKnowledge} href="/app/knowledge" error={error} />
+      </div>
+
+      <div className="grid gap-4 lg:grid-cols-2">
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -94,6 +135,27 @@ export default function Dashboard() {
             )}
           </CardContent>
         </Card>
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <GitBranch className="h-4 w-4" /> Integration health
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <div className="flex items-center justify-between gap-3">
+              <span className="text-sm">Firebase</span>
+              <Badge tone={db ? "success" : "warning"}>{db ? "Client available" : "Configuration required"}</Badge>
+            </div>
+            <div className="flex items-center justify-between gap-3">
+              <span className="text-sm">Website Widget</span>
+              <Badge tone={widgetConfigured ? "success" : "warning"}>{widgetConfigured ? "Origin configured" : "Origin missing"}</Badge>
+            </div>
+            <div className="flex items-center justify-between gap-3">
+              <span className="text-sm">External providers</span>
+              <Badge>Not configured</Badge>
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
       {error && (
@@ -101,6 +163,8 @@ export default function Dashboard() {
           <AlertTriangle className="h-4 w-4" /> Couldn't load live counts. Something may be broken — check Settings.
         </p>
       )}
+
+      <p className="text-xs text-muted-foreground">Last refreshed: {formatDateTime(new Date().toISOString())}</p>
     </div>
   );
 }
