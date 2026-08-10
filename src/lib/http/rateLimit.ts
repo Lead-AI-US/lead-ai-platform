@@ -6,7 +6,7 @@
  *
  * Path: workspaces/{workspaceId}/rateLimits/{windowKey}
  */
-import { getAdminDb } from "@/lib/firebase/admin";
+import { getAdminDb } from "../firebase/admin.js";
 import { FieldValue } from "firebase-admin/firestore";
 
 const WINDOW_MS = 60_000;

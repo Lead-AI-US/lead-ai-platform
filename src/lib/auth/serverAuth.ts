@@ -17,13 +17,13 @@
  * the browser.
  */
 import type { VercelRequest, VercelResponse } from "@vercel/node";
-import { getAdminAuth, getAdminDb } from "@/lib/firebase/admin";
+import { getAdminAuth, getAdminDb } from "../firebase/admin.js";
 import {
   roleAtLeast,
   workspaceMemberDocId,
   type WorkspaceMember,
   type WorkspaceRole,
-} from "@/types/workspace";
+} from "../../types/workspace.js";
 
 export interface AuthedUser {
   uid: string;

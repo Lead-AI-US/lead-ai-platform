@@ -1,6 +1,6 @@
 /** Audit logging — SERVER ONLY. Fail-safe: never blocks the action it records. */
-import { getAdminDb } from "@/lib/firebase/admin";
-import type { AuditEventName, AuditLogEntry } from "@/types/audit";
+import { getAdminDb } from "../firebase/admin.js";
+import type { AuditEventName, AuditLogEntry } from "../../types/audit.js";
 
 export async function recordAuditEvent(params: {
   workspaceId: string;

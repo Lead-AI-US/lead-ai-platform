@@ -1,15 +1,15 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
-import { getAdminDb } from "@/lib/firebase/admin";
-import { parseBody, safeServerError } from "@/lib/http/apiHelpers";
-import { ChatMessageInputSchema } from "@/lib/validation/chat";
-import { isOriginAllowed } from "@/lib/http/originPolicy";
-import { checkRateLimit } from "@/lib/http/rateLimit";
-import { orchestrateAssistantResponse } from "@/lib/ai/orchestrator";
-import { trackEvent } from "@/lib/analytics/track";
-import type { Workspace } from "@/types/workspace";
-import type { KnowledgeSource } from "@/types/knowledge";
-import type { Conversation, ConversationStatus, Message } from "@/types/conversation";
-import type { Lead } from "@/types/lead";
+import { getAdminDb } from "../src/lib/firebase/admin.js";
+import { parseBody, safeServerError } from "../src/lib/http/apiHelpers.js";
+import { ChatMessageInputSchema } from "../src/lib/validation/chat.js";
+import { isOriginAllowed } from "../src/lib/http/originPolicy.js";
+import { checkRateLimit } from "../src/lib/http/rateLimit.js";
+import { orchestrateAssistantResponse } from "../src/lib/ai/orchestrator.js";
+import { trackEvent } from "../src/lib/analytics/track.js";
+import type { Workspace } from "../src/types/workspace.js";
+import type { KnowledgeSource } from "../src/types/knowledge.js";
+import type { Conversation, ConversationStatus, Message } from "../src/types/conversation.js";
+import type { Lead } from "../src/types/lead.js";
 
 /**
  * POST /api/chat — the public website-chat widget endpoint.

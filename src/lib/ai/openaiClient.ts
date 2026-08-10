@@ -9,7 +9,7 @@
  * documented safe fallback response - never fabricate a reply.
  */
 import OpenAI from "openai";
-import { ASSISTANT_DECISION_JSON_SCHEMA } from "@/types/ai";
+import { ASSISTANT_DECISION_JSON_SCHEMA } from "../../types/ai.js";
 
 let cachedClient: OpenAI | null | undefined;
 

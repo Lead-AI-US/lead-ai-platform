@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { LEAD_STATUSES } from "@/types/lead";
+import { LEAD_STATUSES } from "../../types/lead.js";
 
 export const CreateLeadSchema = z.object({
   source: z.enum(["website_chat", "manual"]),

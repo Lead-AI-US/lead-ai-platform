@@ -1,7 +1,7 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
-import { getPathParam, safeServerError } from "../../../../src/lib/http/apiHelpers";
-import { requireWorkspaceMembership } from "../../../../src/lib/auth/serverAuth";
-import { providerAdapters } from "../../../_lib/providerAdapters";
+import { getPathParam, safeServerError } from "../../../../src/lib/http/apiHelpers.js";
+import { requireWorkspaceMembership } from "../../../../src/lib/auth/serverAuth.js";
+import { providerAdapters } from "../../../_lib/providerAdapters.js";
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   const workspaceId = getPathParam(req, "workspaceId");

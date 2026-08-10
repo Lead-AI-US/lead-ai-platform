@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { MAX_MESSAGE_LENGTH } from "@/types/conversation";
+import { MAX_MESSAGE_LENGTH } from "../../types/conversation.js";
 
 /** Inbound payload to POST /api/chat — one visitor message. */
 export const ChatMessageInputSchema = z.object({
