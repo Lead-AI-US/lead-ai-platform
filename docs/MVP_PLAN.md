@@ -1,5 +1,8 @@
 # MVP Plan
 
+**Superseded (2026-08-09):** see `docs/MVP_VERIFICATION.md` for the actual
+MVP scope and status. Kept for history.
+
 ## Objective
 
 Ship the smallest credible demo for Lead.AI Platform.

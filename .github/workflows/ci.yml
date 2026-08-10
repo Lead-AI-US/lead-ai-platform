@@ -1,0 +1,56 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Unit tests
+        run: npm test
+
+      - name: Build
+        run: npm run build
+
+  # Firestore Security Rules tests need the emulator (JDK 21+) and are kept
+  # as a separate, allowed-to-be-skipped job rather than blocking the main
+  # gate - see docs/LOCAL_DEVELOPMENT.md for why this couldn't be verified
+  # in the development sandbox this MVP was built in.
+  rules-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+
+      - run: npm ci
+
+      - name: Start Firestore emulator and run rules tests
+        run: |
+          npx firebase emulators:exec --only firestore --project demo-lead-ai-platform "npm run test:rules"

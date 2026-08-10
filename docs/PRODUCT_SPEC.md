@@ -1,5 +1,11 @@
 # Product Spec
 
+**Superseded (2026-08-09):** the generic "AI insights panel / product modules" concept
+below was the pre-implementation planning sketch. The actual MVP built in
+`feat/real-saas-foundation` narrowed scope to one concrete, working loop —
+see `docs/MVP_VERIFICATION.md` for what's real. This file is kept for
+history per the project's "never erase evidence" rule, not as current spec.
+
 ## Product
 
 Lead.AI Platform
@@ -7,6 +13,13 @@ Lead.AI Platform
 ## Role
 
 Main Lead.AI SaaS platform/dashboard.
+
+## What actually shipped instead (see MVP_VERIFICATION.md)
+
+Sign up → create workspace → add approved knowledge → install website chat
+widget → visitor conversation → AI answer or human handoff → lead capture →
+owner dashboard → real analytics. WhatsApp, calendar booking, billing, and
+"AI insights panel"-style generic modules are explicitly deferred.
 
 ## Value Proposition
 

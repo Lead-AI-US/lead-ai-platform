@@ -1,5 +1,9 @@
 # API Spec
 
+**Superseded (2026-08-09):** see `docs/API.md` for the real, implemented API
+— every endpoint below was a pre-implementation sketch of a different
+("dashboard summary") shape than what was actually built. Kept for history.
+
 ## Status
 
 In Development / MVP

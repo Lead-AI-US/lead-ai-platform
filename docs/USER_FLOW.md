@@ -1,5 +1,10 @@
 # User Flow
 
+**Superseded (2026-08-09):** see `docs/MVP_VERIFICATION.md` for the actual
+implemented flow (signup → workspace → knowledge → widget install → real
+visitor conversation → AI answer/handoff → lead → dashboard → analytics).
+Kept for history.
+
 ## Primary User
 
 Small business owners
