@@ -14,6 +14,9 @@
   --primary-foreground: 0 0% 100%;
   --destructive: 0 72% 51%;
   --destructive-foreground: 0 0% 100%;
+  --success: 158 70% 31%;
+  --warning: 35 92% 42%;
+  --focus: 222 90% 56%;
   --radius: 0.5rem;
 }
 
@@ -29,6 +32,9 @@
   --primary-foreground: 222 30% 8%;
   --destructive: 0 63% 55%;
   --destructive-foreground: 0 0% 100%;
+  --success: 153 58% 55%;
+  --warning: 38 92% 62%;
+  --focus: 214 100% 75%;
 }
 
 * {
@@ -38,4 +44,12 @@
 body {
   background-color: hsl(var(--background));
   color: hsl(var(--foreground));
+}
+
+button,
+a,
+input,
+textarea,
+select {
+  outline-color: hsl(var(--focus));
 }
