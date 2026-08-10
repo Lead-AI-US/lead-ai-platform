@@ -7,8 +7,8 @@ when the AI shouldn't answer alone.
 
 ## Product Status
 
-MVP implemented, `feat/real-saas-foundation` (2026-08-09) — runnable,
-typechecked, linted, and tested. **Not deployed, not connected to a live
+MVP implemented and Product Pro UX integration in progress — runnable,
+typechecked, linted, and tested locally. **Not deployed, not connected to a live
 Firebase/OpenAI project, no real pilot has used it.** See
 [docs/MVP_VERIFICATION.md](docs/MVP_VERIFICATION.md) for the honest,
 evidence-based status of every piece, and
@@ -26,6 +26,21 @@ Sign up → create workspace → add approved knowledge → install widget
 WhatsApp, voice, SMS, calendar booking, billing, and advanced lead scoring
 are explicitly out of scope until this loop has been used by a real pilot —
 see [docs/ROADMAP.md](docs/ROADMAP.md).
+
+## Product Pro surfaces
+
+The app shell now includes grouped workspace navigation, a command palette,
+responsive workspace header, and additional professional SaaS surfaces:
+
+- AI Agent
+- Automations
+- Integrations
+- AI Assets
+- Developer Center
+
+These surfaces layer on top of the real Firebase/Auth/Firestore/OpenAI
+foundation. GitHub, Hugging Face, and Kaggle are shown as `Not Configured`
+until real authorization and server-side secret handling are implemented.
 
 ## Tech Stack
 
@@ -50,8 +65,9 @@ npm run dev                  # http://localhost:5173
 ```bash
 npm run typecheck   # tsc -b, 0 errors
 npm run lint         # eslint, 0 errors
-npm test             # vitest, 83/83 passing
+npm test             # vitest unit suite
 npm run build        # vite build
+npm run cli -- doctor
 ```
 
 Firestore Security Rules tests need the emulator (JDK 21+) — see
@@ -80,6 +96,10 @@ accidentally imported into browser code).
 | [SECURITY.md](docs/SECURITY.md) | Secrets, tenant isolation, known simplifications |
 | [LOCAL_DEVELOPMENT.md](docs/LOCAL_DEVELOPMENT.md) | Env setup, emulator, verification commands |
 | [DEPLOYMENT.md](docs/DEPLOYMENT.md) | Target, required env vars, what's been checked |
+| [PRODUCT_PRO_INTEGRATION.md](docs/PRODUCT_PRO_INTEGRATION.md) | Product Pro v2 integration boundaries |
+| [CLI.md](docs/CLI.md) | Local Lead.AI CLI |
+| [INTEGRATIONS.md](docs/INTEGRATIONS.md) | Provider metadata and connection status |
+| [AI_ASSETS.md](docs/AI_ASSETS.md) | AI asset metadata registry |
 
 ## Responsible AI
 
