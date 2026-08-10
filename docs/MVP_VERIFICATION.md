@@ -148,10 +148,10 @@ demo numbers.
 
 ## Firestore Rules / Security Tests
 
-**BLOCKED — see "Workspace Creation" above.** Rules are real and reviewed;
-the test suite proving tenant isolation is written and complete; running it
-in this specific sandbox is blocked by an old JDK. Not the same as
-"skipped" or "assumed passing."
+**GREEN — see "Workspace Creation" above.** Rules are real, reviewed, and
+now confirmed by an actual emulator run in CI (7/7 passed) — not "skipped"
+or "assumed passing," and not blocked in the artifact that matters (CI),
+even though this local sandbox couldn't run it.
 
 ## Typecheck / Lint / Tests / Build
 
