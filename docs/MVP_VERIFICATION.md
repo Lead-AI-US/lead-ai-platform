@@ -62,20 +62,20 @@ token. Not exercised end-to-end in a browser in this pass.
 
 ## Workspace Creation / Membership Authorization / Tenant Isolation
 
-**GREEN (code + unit tests), BLOCKED (rules tests need a live emulator).**
-`POST /api/workspaces` creates a `Workspace` + owner `WorkspaceMember` in one
-Firestore batch. `requireWorkspaceRole` fails closed at every step
-(`src/lib/auth/serverAuth.ts`). Every workspace-scoped query is built from a
-server-verified `workspaceId` — structurally impossible to cross tenants
-(see `docs/SECURITY.md`). Firestore Security Rules
-(`firebase/firestore.rules`) are a second, independent layer, with a real
-test suite (`src/test/firestoreRules.rules.test.ts`, 7 tests covering
+**GREEN — verified.** `POST /api/workspaces` creates a `Workspace` + owner
+`WorkspaceMember` in one Firestore batch. `requireWorkspaceRole` fails
+closed at every step (`src/lib/auth/serverAuth.ts`). Every workspace-scoped
+query is built from a server-verified `workspaceId` — structurally
+impossible to cross tenants (see `docs/SECURITY.md`). Firestore Security
+Rules (`firebase/firestore.rules`) are a second, independent layer, with a
+real test suite (`src/test/firestoreRules.rules.test.ts`, 7 tests covering
 A-can't-read-B in both directions, unauthenticated denial, client-write
-denial, cross-user profile denial) — **written and complete, but this
-sandbox's Java (8) is too old for the Firestore emulator (needs 21+)**,
-confirmed by attempting to start it (`firebase-tools no longer supports Java
-version before 21`). The `rules-tests` CI job installs JDK 21 and will
-actually run these on push.
+denial, cross-user profile denial). This local sandbox's Java (8) was too
+old to run the Firestore emulator (`firebase-tools no longer supports Java
+version before 21`), but the `rules-tests` CI job (real JDK 21) ran it for
+real on PR #7: **7/7 passed, 2.96s**
+([run 31350759898](https://github.com/Lead-AI-US/lead-ai-platform/actions/runs/31350759898)).
+Tenant isolation is now verified, not just written.
 
 ## Leads / Knowledge
 
