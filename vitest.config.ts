@@ -9,7 +9,7 @@ export default defineConfig({
   },
   test: {
     environment: "node",
-    include: ["src/**/*.test.ts", "api/**/*.test.ts"],
+    include: ["src/**/*.test.ts", "api/**/*.test.ts", "cli/**/*.test.mjs"],
     exclude: ["src/**/*.rules.test.ts"],
   },
 });
