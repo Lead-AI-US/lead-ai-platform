@@ -1,4 +1,4 @@
-import type { IsoTimestamp } from "./firestoreTimestamp";
+import type { IsoTimestamp } from "./firestoreTimestamp.js";
 
 export type WorkspaceStatus = "onboarding" | "testing" | "active" | "suspended";
 

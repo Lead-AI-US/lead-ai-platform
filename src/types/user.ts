@@ -1,4 +1,4 @@
-import type { IsoTimestamp } from "./firestoreTimestamp";
+import type { IsoTimestamp } from "./firestoreTimestamp.js";
 
 /** Firestore path: users/{uid} */
 export interface UserProfile {

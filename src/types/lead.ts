@@ -1,4 +1,4 @@
-import type { IsoTimestamp } from "./firestoreTimestamp";
+import type { IsoTimestamp } from "./firestoreTimestamp.js";
 
 export type LeadStatus = "new" | "reviewed" | "contacted" | "qualified" | "not_ready" | "closed";
 export type LeadSource = "website_chat" | "manual";
