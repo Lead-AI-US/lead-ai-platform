@@ -160,12 +160,12 @@ in this session, against this exact commit.
 
 ## CI
 
-**GREEN (configured), NOT YET EXECUTED (no push to GitHub Actions yet as of
-writing this file — see the final report for the actual push/PR evidence).**
-`.github/workflows/ci.yml` — one job runs typecheck/lint/test/build on every
-push and PR; a second job installs a real JDK 21 and runs the Firestore
-rules tests against the emulator, so the rules-testing gap above gets closed
-in CI even though it couldn't be closed in this sandbox.
+**GREEN — executed and passing.** `.github/workflows/ci.yml`, run on PR #7
+([31350759898](https://github.com/Lead-AI-US/lead-ai-platform/actions/runs/31350759898)):
+`build` job (typecheck/lint/test/build) — pass, 41s. `rules-tests` job (real
+JDK 21, real Firestore emulator) — pass, 38s, 7/7 rules tests. This is the
+first real execution of this CI config, on this repo's first-ever PR with
+actual application code.
 
 ## Preview Deployment
 
@@ -187,7 +187,7 @@ checked.
 | Firebase Auth | GREEN (code), NOT CONFIGURED (no live project) |
 | Workspace Creation | GREEN |
 | Membership Authorization | GREEN |
-| Firestore Security Rules | GREEN (written), BLOCKED (unexecuted locally) |
+| Firestore Security Rules | GREEN — verified in CI (7/7 passed, real emulator) |
 | Lead Persistence | GREEN |
 | Lead Dashboard | GREEN |
 | Knowledge Persistence | GREEN |
