@@ -28,12 +28,14 @@ export default function AIAgent() {
           </CardHeader>
           <CardContent>
             <dl className="grid gap-3 text-sm sm:grid-cols-2">
-              <Detail label="Provider" value="OpenAI server adapter" />
-              <Detail label="Model" value="Server configured" tone="neutral" />
+              <Detail label="Provider" value="OpenAI server adapter" tone="neutral" />
+              <Detail label="Model" value="Unknown" tone="neutral" />
               <Detail label="Prompt version" value="Policy-managed" />
               <Detail label="Workspace" value={workspace.name} />
               <Detail label="Website channel" value={websiteConfigured ? "Allowed origin configured" : "Configuration required"} tone={websiteConfigured ? "success" : "warning"} />
+              <Detail label="Knowledge" value="Workspace-scoped retrieval" />
               <Detail label="Handoff behavior" value="Needs Human status supported" />
+              <Detail label="Last activity" value="Unknown" tone="neutral" />
             </dl>
           </CardContent>
         </Card>

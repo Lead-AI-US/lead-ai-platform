@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { collection, onSnapshot, orderBy, query } from "firebase/firestore";
-import { MessageSquare } from "lucide-react";
+import { AlertTriangle, MessageSquare } from "lucide-react";
 import { db } from "@/lib/firebase/client";
 import { useWorkspace } from "@/lib/workspace/WorkspaceProvider";
 import { PageHeader } from "@/app/PageHeader";
@@ -52,7 +52,7 @@ export default function Conversations() {
       ) : sorted.length === 0 ? (
         <EmptyState icon={MessageSquare} title="No conversations yet" description="Visitor conversations from your website chat will appear here." />
       ) : (
-        <div className="grid grid-cols-1 gap-4 lg:grid-cols-[320px_1fr]">
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-[320px_1fr_260px]">
           <div className="flex flex-col gap-2">
             {sorted.map((c) => (
               <button
@@ -64,9 +64,14 @@ export default function Conversations() {
                 )}
               >
                 <div className="flex items-center justify-between">
-                <span className="font-medium">{c.id.slice(0, 8)}</span>
+                  <span className="font-medium">{c.id.slice(0, 8)}</span>
                   <Badge tone={STATUS_TONE[c.status]}>{c.status.replace("_", " ")}</Badge>
                 </div>
+                {c.status === "needs_human" && (
+                  <p className="mt-2 flex items-center gap-1 text-xs font-medium text-amber-600 dark:text-amber-400">
+                    <AlertTriangle className="h-3 w-3" aria-hidden="true" /> Human response required
+                  </p>
+                )}
                 <p className="text-xs text-muted-foreground">Updated {new Date(c.updatedAt).toLocaleString()}</p>
               </button>
             ))}
@@ -80,8 +85,36 @@ export default function Conversations() {
               </Card>
             )}
           </div>
+          <ConversationContext conversation={sorted.find((conversation) => conversation.id === selectedId) ?? null} />
         </div>
       )}
+    </div>
+  );
+}
+
+function ConversationContext({ conversation }: { conversation: Conversation | null }) {
+  return (
+    <Card className="p-4">
+      <h3 className="text-sm font-semibold">Context</h3>
+      {conversation ? (
+        <dl className="mt-3 grid gap-3 text-sm">
+          <ContextDetail label="Status" value={conversation.status.replace("_", " ")} />
+          <ContextDetail label="Channel" value={conversation.channel} />
+          <ContextDetail label="Lead" value={conversation.leadId ?? "Not linked"} />
+          <ContextDetail label="Updated" value={new Date(conversation.updatedAt).toLocaleString()} />
+        </dl>
+      ) : (
+        <p className="mt-3 text-sm text-muted-foreground">Select a conversation to see context.</p>
+      )}
+    </Card>
+  );
+}
+
+function ContextDetail({ label, value }: { label: string; value: string }) {
+  return (
+    <div>
+      <dt className="text-xs font-semibold uppercase text-muted-foreground">{label}</dt>
+      <dd className="mt-1 break-words">{value}</dd>
     </div>
   );
 }

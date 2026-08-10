@@ -114,7 +114,7 @@ export default function Dashboard() {
         <StatCard icon={BookOpen} label="Approved knowledge" value={counts?.approvedKnowledge} href="/app/knowledge" error={error} />
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-2">
+      <div className="grid gap-4 lg:grid-cols-3">
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -133,6 +133,25 @@ export default function Dashboard() {
                 to install it.
               </p>
             )}
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <AlertTriangle className="h-4 w-4" /> AI health
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <div className="flex items-center justify-between gap-3">
+              <span className="text-sm">OpenAI server adapter</span>
+              <Badge>Unknown</Badge>
+            </div>
+            <div className="flex items-center justify-between gap-3">
+              <span className="text-sm">Knowledge readiness</span>
+              <Badge tone={counts?.approvedKnowledge ? "success" : "warning"}>
+                {counts?.approvedKnowledge ? "Approved sources available" : "No approved sources"}
+              </Badge>
+            </div>
           </CardContent>
         </Card>
         <Card>
@@ -157,6 +176,17 @@ export default function Dashboard() {
           </CardContent>
         </Card>
       </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Recent activity</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-sm text-muted-foreground">
+            Activity feed is not configured yet. Live counts above are loaded from workspace-scoped Firestore collections.
+          </p>
+        </CardContent>
+      </Card>
 
       {error && (
         <p className="mt-4 flex items-center gap-2 text-sm text-destructive">
