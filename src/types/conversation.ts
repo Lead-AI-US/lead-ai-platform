@@ -1,4 +1,4 @@
-import type { IsoTimestamp } from "./firestoreTimestamp";
+import type { IsoTimestamp } from "./firestoreTimestamp.js";
 
 export type ConversationStatus = "active" | "needs_human" | "resolved";
 export type ConversationChannel = "website";

@@ -1,4 +1,4 @@
-import type { AssistantDecision } from "@/types/ai";
+import type { AssistantDecision } from "../../types/ai.js";
 
 export interface PolicyViolation {
   code: "pricing_claim" | "false_success_claim" | "cross_tenant_reference";

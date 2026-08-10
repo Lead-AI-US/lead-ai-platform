@@ -1,4 +1,4 @@
-import type { KnowledgeSource } from "@/types/knowledge";
+import type { KnowledgeSource } from "../../types/knowledge.js";
 
 const UNKNOWN_INFO_RESPONSE =
   "I don't have enough verified information to answer that accurately. I can connect you with the team.";
