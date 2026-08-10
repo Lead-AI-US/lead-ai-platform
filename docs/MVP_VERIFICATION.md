@@ -205,5 +205,5 @@ checked.
 | Lint | GREEN |
 | Tests | GREEN (83/83) |
 | Build | GREEN |
-| CI | GREEN (configured) |
+| CI | GREEN — executed and passing (PR #7) |
 | Preview Deployment | NOT EXECUTED |
