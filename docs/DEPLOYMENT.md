@@ -41,9 +41,25 @@ be denied (rules default-deny) until rules are pushed.
 4. Run through `docs/MVP_VERIFICATION.md`'s manual checklist against the
    preview before promoting anything to production.
 
-## What was actually attempted in this build pass
+## What was actually checked in this build pass
 
-No Vercel project exists yet for this repository, and this environment has
-no Vercel authentication token scoped to create one. **No deployment was
-attempted or claimed.** See `docs/MVP_VERIFICATION.md`'s "Production
-Deployment" line for the honest status.
+Vercel API access for the account was available and used read-only: the
+team is `Arun's projects` (`team_r62VZS6u8GtiCFAvauwwqo6B`, slug
+`aruns-projects-ba93fc58` — note this **does not match** the
+`aruns-projects-0839d12f` slug named in the governing brief; it's the only
+team this session could actually see, flagged here rather than silently
+substituted). No project named `lead-ai-platform` exists yet among the
+team's 25 projects (`lead-ai-saas` exists but has no linked GitHub repo per
+a prior audit — not reused, to avoid inheriting an unclear history).
+
+The only deploy mechanism available in this session is a one-off "paste
+files, get a preview" tool meant for freshly generated single-shot apps, not
+an ongoing git-connected repository — using it here would mean manually
+re-transcribing ~75 source files into one call, with real risk of a
+transcription mismatch silently producing misleading deploy evidence. That
+tradeoff was surfaced and the decision was to **skip it**: push the branch
+to GitHub (real, cheap, verifiable) and deploy via the Vercel dashboard's
+**Import Git Repository** flow instead — the same mechanism the marketing
+site's Vercel project already uses, and the correct one for a repo that will
+keep evolving. **No deployment was attempted.** See
+`docs/MVP_VERIFICATION.md`'s "Production Deployment" line.

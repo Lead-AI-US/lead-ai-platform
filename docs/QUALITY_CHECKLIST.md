@@ -1,5 +1,11 @@
 # Quality Checklist
 
+**Status (2026-08-09):** see `docs/MVP_VERIFICATION.md` for the real,
+evidence-based checklist against the implemented MVP. This file's checkboxes
+below are the pre-implementation planning version — left unchecked
+intentionally rather than retrofitted, since "done" here would just
+duplicate MVP_VERIFICATION.md less precisely.
+
 ## Documentation Quality
 
 - [ ] Product value is clear in the first 10 seconds.

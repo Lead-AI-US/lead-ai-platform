@@ -1,134 +1,114 @@
 # Lead.AI Platform
 
-A central AI automation dashboard for managing leads, conversations, analytics, and workflow modules.
+A multi-tenant SaaS: business owners sign up, create a workspace, add
+approved knowledge about their business, install a website chat widget, and
+get AI-answered visitor conversations that become leads — with human handoff
+when the AI shouldn't answer alone.
 
 ## Product Status
 
-In Development / MVP
+MVP implemented, `feat/real-saas-foundation` (2026-08-09) — runnable,
+typechecked, linted, and tested. **Not deployed, not connected to a live
+Firebase/OpenAI project, no real pilot has used it.** See
+[docs/MVP_VERIFICATION.md](docs/MVP_VERIFICATION.md) for the honest,
+evidence-based status of every piece, and
+[docs/REALITY_BASELINE.md](docs/REALITY_BASELINE.md) for what this repo
+looked like before this pass (docs only, no code).
 
-This repository is public and suitable for product planning, documentation review, and future implementation. It should not be described as production-ready until working code, tests, deployment steps, and security controls are in place.
+## The loop this MVP proves
 
-## Problem Solved
+```
+Sign up → create workspace → add approved knowledge → install widget
+  → real visitor conversation → AI answer or human handoff → lead capture
+  → owner dashboard → real analytics
+```
 
-Businesses need one place to manage AI automation, leads, conversations, analytics, and product workflows.
-
-## Target Users
-
-- Small business owners
-- Sales teams
-- Customer support teams
-- Agencies
-- Startup operators
-
-## Key Features
-
-- Dashboard
-- Lead overview
-- AI insights panel
-- Product modules
-- Conversation summary
-- Usage analytics
-- Automation status
-- Integration placeholders
-- Admin-ready architecture
+WhatsApp, voice, SMS, calendar booking, billing, and advanced lead scoring
+are explicitly out of scope until this loop has been used by a real pilot —
+see [docs/ROADMAP.md](docs/ROADMAP.md).
 
 ## Tech Stack
 
-- React
-- Tailwind CSS
-- Firebase
-- FastAPI-ready API structure
-- OpenAI-compatible AI workflows
+- React 18 + TypeScript + Vite + Tailwind CSS
+- Firebase Authentication + Cloud Firestore (multi-tenant)
+- Vercel serverless functions (TypeScript) + Firebase Admin SDK
+- OpenAI server SDK, strict structured output
+- Vitest (unit + AI orchestrator tests) + `@firebase/rules-unit-testing` (security rules)
 
-## Architecture Overview
+See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for the full system design.
 
-The intended architecture separates product UI, backend workflows, AI orchestration, data storage, integrations, and operational controls.
-
-Core layers:
-
-- User experience layer for business users and administrators.
-- API or service layer for validation, workflow execution, and integrations.
-- AI layer for prompts, scoring, summaries, recommendations, or decision support.
-- Data layer for leads, conversations, reports, scores, configuration, or audit records.
-- Security layer for authentication, authorization, privacy, logging, and secret management.
-
-See [Architecture](docs/ARCHITECTURE.md) for the detailed design direction.
-
-## Setup Instructions
-
-There is no complete runnable application in this repository yet unless implementation files have been added after this documentation pass.
-
-Recommended future setup pattern:
+## Setup
 
 ```bash
-cp .env.example .env
-# install project dependencies after the stack is implemented
-# run the local development server after package scripts are added
+npm install
+cp .env.example .env.local   # fill in real values, see docs/LOCAL_DEVELOPMENT.md
+npm run dev                  # http://localhost:5173
 ```
 
-When code is added, update this section with exact install, development, test, lint, and build commands.
+## Checks (all real — run these, don't take the README's word for it)
+
+```bash
+npm run typecheck   # tsc -b, 0 errors
+npm run lint         # eslint, 0 errors
+npm test             # vitest, 83/83 passing
+npm run build        # vite build
+```
+
+Firestore Security Rules tests need the emulator (JDK 21+) — see
+[docs/LOCAL_DEVELOPMENT.md](docs/LOCAL_DEVELOPMENT.md).
 
 ## Environment Variables
 
-Configuration is documented in [.env.example](.env.example). Use placeholder names only in public files. Never commit real `.env` files, API keys, access tokens, private credentials, customer exports, or private datasets.
+Documented in [.env.example](.env.example) — placeholders only, never commit
+real values. Firebase client config (`VITE_FIREBASE_*`) is intentionally
+public; `FIREBASE_PRIVATE_KEY` and `OPENAI_API_KEY` are server-only and
+never bundled into client code (`src/lib/firebase/admin.ts` throws if
+accidentally imported into browser code).
 
-## Usage Flow
+## Docs
 
-1. Business user signs in to the dashboard.
-2. They review leads, conversations, automation modules, and AI insights.
-3. They open a lead or module to inspect status, summaries, and recommended next actions.
-4. They configure integrations and monitor automation health.
+| Doc | What it covers |
+|---|---|
+| [MVP_VERIFICATION.md](docs/MVP_VERIFICATION.md) | Evidence-based status of every piece |
+| [REALITY_BASELINE.md](docs/REALITY_BASELINE.md) | What existed before this MVP pass |
+| [ARCHITECTURE.md](docs/ARCHITECTURE.md) | Stack, request flow, directory layout |
+| [FIRESTORE_SCHEMA.md](docs/FIRESTORE_SCHEMA.md) | Collections, indexes, timestamp convention |
+| [AUTHORIZATION.md](docs/AUTHORIZATION.md) | Server auth flow, route matrix |
+| [API.md](docs/API.md) | Every endpoint, request/response shape |
+| [AI_ARCHITECTURE.md](docs/AI_ARCHITECTURE.md) | Orchestration pipeline, safety gates, what's verified vs. not |
+| [WIDGET.md](docs/WIDGET.md) | Public widget key, origin allowlist, rate limiting |
+| [SECURITY.md](docs/SECURITY.md) | Secrets, tenant isolation, known simplifications |
+| [LOCAL_DEVELOPMENT.md](docs/LOCAL_DEVELOPMENT.md) | Env setup, emulator, verification commands |
+| [DEPLOYMENT.md](docs/DEPLOYMENT.md) | Target, required env vars, what's been checked |
 
-See [User Flow](docs/USER_FLOW.md) for more detail.
+## Responsible AI
 
-## Screenshots And Demo
+The AI never invents business facts (hours, pricing, availability,
+guarantees) — if approved knowledge doesn't cover a question, it says so and
+offers a human. It never performs actions directly (no Firestore writes, no
+booking confirmations) — it returns a structured decision the server
+validates and acts on. See
+[docs/AI_ARCHITECTURE.md](docs/AI_ARCHITECTURE.md) for the full pipeline and
+what's tested vs. what still needs a live model to verify.
 
-Screenshots, demo links, and videos will be added after a working demo exists.
+## Security
 
-Suggested public assets:
-
-- Product dashboard screenshot.
-- Primary workflow screenshot.
-- Short demo video or GIF.
-- Deployment or live demo link, if available.
-
-## Roadmap
-
-See [Roadmap](docs/ROADMAP.md) and [MVP Plan](docs/MVP_PLAN.md).
-
-Immediate next step: Create a dashboard shell with lead, conversation, and automation module views.
-
-## Security Notes
-
-- Do not commit secrets or private customer data.
-- Validate user input before storage, scoring, AI processing, or external API calls.
-- Avoid logging personally identifiable information.
-- Add authentication and authorization before handling protected business data.
-
-See [Security](docs/SECURITY.md).
-
-## Responsible AI Notes
-
-- Keep AI limitations visible to users and reviewers.
-- Avoid unsupported claims about accuracy or reliability.
-- Provide human review or handoff for sensitive, uncertain, or high-impact outcomes.
-- Prefer explainable outputs for scores, recommendations, and risk signals.
+No secrets committed, server-only credentials never bundled to the client,
+fail-closed authorization at every layer, tenant isolation enforced both
+structurally and by Firestore Security Rules. See
+[docs/SECURITY.md](docs/SECURITY.md) for specifics and honestly-listed gaps.
 
 ## Related Lead.AI Products
 
-- [Lead.AI Platform](https://github.com/Lead-AI-US/lead-ai-platform)
+- [Lead.AI Website](https://github.com/Arungharami/leadai.us) — the marketing site (separate repo/deployment)
 - [Lead.AI Business Audit](https://github.com/Lead-AI-US/lead-ai-business-audit)
-- [Lead.AI WhatsApp Agent](https://github.com/Lead-AI-US/lead-ai-whatsapp-agent)
-- [Lead.AI Website Chatbot](https://github.com/Lead-AI-US/lead-ai-website-chatbot)
-- [Lead.AI Lead Scoring API](https://github.com/Lead-AI-US/lead-ai-lead-scoring-api)
-- [Lead.AI Prompt Vault](https://github.com/Lead-AI-US/lead-ai-prompt-vault)
-- [Lead.AI Firebase SaaS Starter](https://github.com/Lead-AI-US/lead-ai-firebase-saas-starter)
+- [Lead.AI WhatsApp Agent](https://github.com/Lead-AI-US/lead-ai-whatsapp-agent) — not integrated with this platform yet
 - [Lead.AI Fraud Shield](https://github.com/Lead-AI-US/lead-ai-fraud-shield)
 
 ## Author
 
-Founded by Arun Kumar Gharami.  
-Website: https://www.lead-ai.us  
+Founded by Arun Kumar Gharami.
+Website: https://www.lead-ai.us
 GitHub: https://github.com/Arungharami
 
 ## License
