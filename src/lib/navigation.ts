@@ -9,6 +9,7 @@ import {
   Inbox,
   MessageSquareText,
   Settings,
+  UserRound,
   Workflow,
   type LucideIcon,
 } from "lucide-react";
@@ -30,8 +31,9 @@ export const navigationGroups: NavGroup[] = [
     label: "Workspace",
     items: [
       { to: "/app", label: "Overview", icon: Gauge, end: true },
+      { to: "/app/inbox", label: "Inbox", icon: MessageSquareText },
+      { to: "/app/customers", label: "Customers", icon: UserRound },
       { to: "/app/leads", label: "Leads", icon: Inbox },
-      { to: "/app/conversations", label: "Conversations", icon: MessageSquareText },
     ],
   },
   {

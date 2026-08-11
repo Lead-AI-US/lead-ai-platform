@@ -34,6 +34,20 @@ export function createCommandRegistry({
       run: () => navigate("/app/leads"),
     },
     {
+      id: "customer:find",
+      label: "Find Customer",
+      description: "Search customer records in this workspace.",
+      keywords: ["customer", "search", "timeline"],
+      run: () => navigate("/app/customers"),
+    },
+    {
+      id: "inbox:open",
+      label: "Open Inbox",
+      description: "Open customer conversations needing review.",
+      keywords: ["inbox", "handoff", "conversation"],
+      run: () => navigate("/app/inbox"),
+    },
+    {
       id: "knowledge:add",
       label: "Add Knowledge",
       description: "Open Knowledge to add an approved-source draft.",

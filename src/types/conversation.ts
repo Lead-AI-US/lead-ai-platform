@@ -10,7 +10,9 @@ export interface Conversation {
   channel: ConversationChannel;
   status: ConversationStatus;
   visitorSessionId: string;
+  customerId?: string;
   leadId?: string;
+  latestIntent?: string;
   createdAt: IsoTimestamp;
   updatedAt: IsoTimestamp;
 }

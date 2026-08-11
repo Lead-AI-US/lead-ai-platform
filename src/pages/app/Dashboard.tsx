@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { collection, getCountFromServer, query, where } from "firebase/firestore";
+import { collection, getCountFromServer, getDocs, limit, orderBy, query, where } from "firebase/firestore";
 import { Users, MessageCircleWarning, MessageSquare, PlugZap, AlertTriangle, BookOpen, GitBranch } from "lucide-react";
 import { db } from "@/lib/firebase/client";
 import { useWorkspace } from "@/lib/workspace/WorkspaceProvider";
@@ -8,12 +8,17 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 import { PageHeader } from "@/app/PageHeader";
 import { Badge } from "@/components/ui/Badge";
 import { formatDateTime } from "@/lib/format";
+import { deriveNextBestActions, type NextBestAction } from "@/lib/intelligence/nextBestAction";
+import type { BusinessEvent } from "@/types/event";
+import type { Lead } from "@/types/lead";
 
 interface Counts {
   newLeads: number;
   needsHuman: number;
   totalConversations: number;
   approvedKnowledge: number;
+  customers: number;
+  knowledgeGaps: number;
 }
 
 /**
@@ -24,6 +29,8 @@ interface Counts {
 export default function Dashboard() {
   const { workspace } = useWorkspace();
   const [counts, setCounts] = useState<Counts | null>(null);
+  const [events, setEvents] = useState<BusinessEvent[]>([]);
+  const [actions, setActions] = useState<NextBestAction[]>([]);
   const [error, setError] = useState(false);
 
   useEffect(() => {
@@ -35,21 +42,37 @@ export default function Dashboard() {
         const leadsRef = collection(db!, "workspaces", workspace!.id, "leads");
         const conversationsRef = collection(db!, "workspaces", workspace!.id, "conversations");
         const knowledgeRef = collection(db!, "workspaces", workspace!.id, "knowledgeSources");
+        const customersRef = collection(db!, "workspaces", workspace!.id, "customers");
+        const eventsRef = collection(db!, "workspaces", workspace!.id, "events");
 
-        const [newLeadsSnap, needsHumanSnap, totalConvSnap, approvedKnowledgeSnap] = await Promise.all([
+        const [newLeadsSnap, needsHumanSnap, totalConvSnap, approvedKnowledgeSnap, customersSnap, knowledgeGapSnap, eventsSnap, leadsSnap] =
+          await Promise.all([
           getCountFromServer(query(leadsRef, where("status", "==", "new"))),
           getCountFromServer(query(conversationsRef, where("status", "==", "needs_human"))),
           getCountFromServer(conversationsRef),
           getCountFromServer(query(knowledgeRef, where("status", "==", "approved"))),
+          getCountFromServer(customersRef),
+          getCountFromServer(query(eventsRef, where("type", "==", "knowledge_missing"))),
+          getDocs(query(eventsRef, orderBy("occurredAt", "desc"), limit(12))),
+          getDocs(query(leadsRef, orderBy("createdAt", "desc"), limit(50))),
         ]);
 
         if (cancelled) return;
-        setCounts({
+        const nextCounts = {
           newLeads: newLeadsSnap.data().count,
           needsHuman: needsHumanSnap.data().count,
           totalConversations: totalConvSnap.data().count,
           approvedKnowledge: approvedKnowledgeSnap.data().count,
+          customers: customersSnap.data().count,
+          knowledgeGaps: knowledgeGapSnap.data().count,
+        };
+        const recentEvents = eventsSnap.docs.map((doc) => doc.data() as BusinessEvent);
+        const recentLeads = leadsSnap.docs.map((doc) => doc.data() as Lead);
+        setCounts({
+          ...nextCounts,
         });
+        setEvents(recentEvents);
+        setActions(deriveNextBestActions({ leads: recentLeads, events: recentEvents, approvedKnowledgeCount: nextCounts.approvedKnowledge }));
       } catch {
         if (!cancelled) setError(true);
       }
@@ -74,8 +97,8 @@ export default function Dashboard() {
     <div className="space-y-6">
       <PageHeader
         eyebrow="Overview"
-        title="What needs attention?"
-        description={`Live workspace summary for ${workspace.name}. Counts come from workspace-scoped Firestore records.`}
+        title="Good morning"
+        description={`Here is what needs attention today in ${workspace.name}.`}
       />
 
       <Card className="border-amber-500/30">
@@ -100,17 +123,51 @@ export default function Dashboard() {
         </CardContent>
       </Card>
 
+      <Card>
+        <CardHeader>
+          <CardTitle>Business brief</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {counts === null && !error ? (
+            <p className="text-sm text-muted-foreground">Loading deterministic brief…</p>
+          ) : (
+            <div className="grid gap-4 lg:grid-cols-[1fr_320px]">
+              <ul className="space-y-2 text-sm text-muted-foreground">
+                <li>{counts?.customers ?? 0} customer records</li>
+                <li>{counts?.totalConversations ?? 0} customer conversations</li>
+                <li>{counts?.newLeads ?? 0} new leads captured</li>
+                <li>{counts?.needsHuman ?? 0} handoffs waiting for your team</li>
+                <li>{counts?.knowledgeGaps ?? 0} recorded knowledge gaps</li>
+              </ul>
+              <div className="space-y-2">
+                <p className="text-xs font-semibold uppercase text-muted-foreground">Recommended actions</p>
+                {actions.length ? (
+                  actions.map((action) => (
+                    <Link key={action.id} to={action.destination} className="block rounded-md border border-border p-3 text-sm hover:bg-muted">
+                      <span className="font-medium">{action.label}</span>
+                      <span className="mt-1 block text-xs text-muted-foreground">{action.description}</span>
+                    </Link>
+                  ))
+                ) : (
+                  <p className="text-sm text-muted-foreground">No recommended actions from current workspace state.</p>
+                )}
+              </div>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard icon={Users} label="New leads" value={counts?.newLeads} href="/app/leads" error={error} />
         <StatCard
           icon={MessageCircleWarning}
           label="Needs a human"
           value={counts?.needsHuman}
-          href="/app/conversations"
+          href="/app/inbox"
           error={error}
           highlight={Boolean(counts?.needsHuman)}
         />
-        <StatCard icon={MessageSquare} label="Conversations" value={counts?.totalConversations} href="/app/conversations" error={error} />
+        <StatCard icon={MessageSquare} label="Conversations" value={counts?.totalConversations} href="/app/inbox" error={error} />
         <StatCard icon={BookOpen} label="Approved knowledge" value={counts?.approvedKnowledge} href="/app/knowledge" error={error} />
       </div>
 
@@ -182,9 +239,18 @@ export default function Dashboard() {
           <CardTitle>Recent activity</CardTitle>
         </CardHeader>
         <CardContent>
-          <p className="text-sm text-muted-foreground">
-            Activity feed is not configured yet. Live counts above are loaded from workspace-scoped Firestore collections.
-          </p>
+          {events.length ? (
+            <div className="grid gap-2">
+              {events.slice(0, 6).map((event) => (
+                <div key={event.id} className="flex items-center justify-between gap-3 rounded-md border border-border p-3 text-sm">
+                  <span>{event.type.replace(/_/g, " ")}</span>
+                  <span className="text-xs text-muted-foreground">{formatDateTime(event.occurredAt)}</span>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-sm text-muted-foreground">No business events have been recorded yet.</p>
+          )}
         </CardContent>
       </Card>
 

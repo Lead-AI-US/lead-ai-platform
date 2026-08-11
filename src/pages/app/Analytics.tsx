@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { collection, getDocs, limit, orderBy, query, where } from "firebase/firestore";
 import { BarChart3 } from "lucide-react";
 import { useWorkspace } from "@/lib/workspace/WorkspaceProvider";
 import { apiGet } from "@/lib/api/client";
@@ -7,7 +8,10 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { cn } from "@/lib/cn";
+import { db } from "@/lib/firebase/client";
+import { formatDateTime } from "@/lib/format";
 import type { AnalyticsSummary } from "@/types/analytics";
+import type { BusinessEvent } from "@/types/event";
 import type { TimeRange } from "@/lib/analytics/timeRange";
 
 const RANGES: { value: TimeRange; label: string }[] = [
@@ -20,6 +24,7 @@ export default function Analytics() {
   const { workspace } = useWorkspace();
   const [range, setRange] = useState<TimeRange>("30d");
   const [summary, setSummary] = useState<AnalyticsSummary | null>(null);
+  const [knowledgeGaps, setKnowledgeGaps] = useState<BusinessEvent[]>([]);
   const [error, setError] = useState(false);
 
   useEffect(() => {
@@ -29,6 +34,15 @@ export default function Analytics() {
     apiGet<AnalyticsSummary>(`/api/workspaces/${workspace.id}/analytics/summary?timeRange=${range}`)
       .then(setSummary)
       .catch(() => setError(true));
+    if (db) {
+      const gapsQuery = query(
+        collection(db, "workspaces", workspace.id, "events"),
+        where("type", "==", "knowledge_missing"),
+        orderBy("occurredAt", "desc"),
+        limit(20)
+      );
+      void getDocs(gapsQuery).then((snap) => setKnowledgeGaps(snap.docs.map((doc) => doc.data() as BusinessEvent)));
+    }
   }, [workspace, range]);
 
   if (!workspace) return null;
@@ -71,6 +85,23 @@ export default function Analytics() {
               {summary.funnel.map((step) => (
                 <FunnelRow key={step.step} step={step.step} count={step.count} max={summary.funnel[0]?.count || 1} />
               ))}
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader>
+              <CardTitle>Knowledge gaps</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-2">
+              {knowledgeGaps.length ? (
+                knowledgeGaps.map((gap) => (
+                  <div key={gap.id} className="rounded-md border border-border p-3 text-sm">
+                    <div className="font-medium">{typeof gap.metadata.intent === "string" ? gap.metadata.intent : "Unknown question"}</div>
+                    <div className="text-xs text-muted-foreground">Last asked {formatDateTime(gap.occurredAt)}</div>
+                  </div>
+                ))
+              ) : (
+                <p className="text-sm text-muted-foreground">No knowledge gaps recorded in business events yet.</p>
+              )}
             </CardContent>
           </Card>
         </div>

@@ -8,6 +8,7 @@ export const CreateLeadSchema = z.object({
   phone: z.string().trim().max(40).optional(),
   message: z.string().trim().max(2000).optional(),
   conversationId: z.string().trim().max(200).optional(),
+  customerId: z.string().trim().max(200).optional(),
 });
 export type CreateLeadInput = z.infer<typeof CreateLeadSchema>;
 
