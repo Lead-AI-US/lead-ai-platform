@@ -4,6 +4,7 @@ import { Link } from "react-router-dom";
 import { AlertTriangle, MessageSquare } from "lucide-react";
 import { db } from "@/lib/firebase/client";
 import { useWorkspace } from "@/lib/workspace/WorkspaceProvider";
+import { apiPost } from "@/lib/api/client";
 import { PageHeader } from "@/app/PageHeader";
 import { CustomerTimeline } from "@/components/CustomerTimeline";
 import { EmptyState } from "@/components/ui/EmptyState";
@@ -120,6 +121,28 @@ export default function Conversations() {
 }
 
 function ConversationContext({ conversation }: { conversation: Conversation | null }) {
+  const [actionState, setActionState] = useState<string>("");
+
+  async function requestHandoff() {
+    if (!conversation) return;
+    setActionState("Saving...");
+    try {
+      await apiPost(`/api/workspaces/${conversation.workspaceId}/actions`, {
+        type: "request_handoff",
+        workspaceId: conversation.workspaceId,
+        conversationId: conversation.id,
+        customerId: conversation.customerId,
+        idempotencyKey: `operator:${conversation.id}:handoff:${Date.now()}`,
+        proposedBy: { type: "user" },
+        rationale: "Operator requested human review from Inbox.",
+        payload: { reason: "Operator requested human review." },
+      });
+      setActionState("Handoff saved.");
+    } catch {
+      setActionState("Action failed.");
+    }
+  }
+
   return (
     <Card className="p-4">
       <h3 className="text-sm font-semibold">Context</h3>
@@ -137,6 +160,15 @@ function ConversationContext({ conversation }: { conversation: Conversation | nu
               Open customer profile
             </Link>
           )}
+          <button
+            type="button"
+            onClick={() => void requestHandoff()}
+            disabled={conversation.status === "needs_human"}
+            className="w-full rounded-md border border-border bg-muted px-3 py-2 text-sm font-medium hover:bg-muted/70 disabled:pointer-events-none disabled:opacity-50"
+          >
+            Request handoff
+          </button>
+          {actionState && <p className="text-xs text-muted-foreground">{actionState}</p>}
           <ConversationTimeline workspaceId={conversation.workspaceId} conversationId={conversation.id} />
         </div>
       ) : (

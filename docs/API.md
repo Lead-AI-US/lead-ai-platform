@@ -57,6 +57,39 @@ server-side — never a client-side full scan. Returns `AnalyticsSummary`
 (`src/types/analytics.ts`), including a truthful `hasData: false` when there's
 nothing yet.
 
+## `GET /api/workspaces/:workspaceId/analytics/journey?timeRange=7d|30d|all`
+
+Requires `viewer`. Aggregates workspace business events server-side and returns
+event counts plus top conversation transitions only. It does not return message
+bodies, contact details, or raw customer PII.
+
+## `GET /api/workspaces/:workspaceId/search?q=...`
+
+Requires `viewer`. Bounded workspace search across recent leads, customers,
+conversations, knowledge sources, AI assets, and integration metadata. Each
+collection query is scoped to `workspaces/{workspaceId}` and capped before
+server-side matching.
+
+## `POST /api/workspaces/:workspaceId/actions`
+
+Requires `member`. Proposes and, when policy permits, executes a supported
+action through the central action engine. Returns the persisted action, policy
+decision, and execution result. Unsupported actions return
+`ACTION_NOT_SUPPORTED`; approval-required actions return policy output without
+execution.
+
+## `POST /api/workspaces/:workspaceId/actions/simulate`
+
+Requires `viewer`. Runs schema/risk/policy checks and returns expected effects
+without mutation.
+
+## `POST /api/workspaces/:workspaceId/agent/test`
+
+Requires `viewer`. Calls the same approved-knowledge AI orchestration path as
+production chat and returns a structured dry-run result with simulated actions.
+It returns `persisted: false` and does not create conversations, leads, or
+analytics events.
+
 ## `POST /api/chat`
 
 The public website-chat widget endpoint — see `docs/WIDGET.md` for the full

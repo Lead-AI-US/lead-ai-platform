@@ -22,10 +22,17 @@ export const BUSINESS_EVENT_TYPES = [
   "automation_started",
   "automation_completed",
   "automation_failed",
+  "agent_action_proposed",
+  "agent_action_validated",
+  "agent_action_approval_required",
+  "agent_action_started",
+  "agent_action_completed",
+  "agent_action_failed",
+  "agent_action_cancelled",
 ] as const;
 
 export type BusinessEventType = (typeof BUSINESS_EVENT_TYPES)[number];
-export type BusinessEventActorType = "customer" | "ai" | "user" | "system";
+export type BusinessEventActorType = "customer" | "ai" | "user" | "system" | "automation";
 
 /** Firestore path: workspaces/{workspaceId}/events/{eventId} */
 export interface BusinessEvent {
@@ -35,6 +42,9 @@ export interface BusinessEvent {
   customerId?: string;
   leadId?: string;
   conversationId?: string;
+  agentActionId?: string;
+  sourceEventId?: string;
+  automationRunId?: string;
   actor: {
     type: BusinessEventActorType;
     id?: string;
@@ -56,6 +66,8 @@ export interface TimelineItem {
   customerId?: string;
   leadId?: string;
   conversationId?: string;
+  agentActionId?: string;
+  automationRunId?: string;
   actorType: BusinessEventActorType;
   occurredAt: IsoTimestamp;
 }

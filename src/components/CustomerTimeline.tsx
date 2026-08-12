@@ -26,6 +26,13 @@ const EVENT_COPY: Record<BusinessEventType, { title: string; tone: "neutral" | "
   automation_started: { title: "Automation started", tone: "info" },
   automation_completed: { title: "Automation completed", tone: "success" },
   automation_failed: { title: "Automation failed", tone: "danger" },
+  agent_action_proposed: { title: "Action proposed", tone: "info" },
+  agent_action_validated: { title: "Action validated", tone: "success" },
+  agent_action_approval_required: { title: "Approval required", tone: "warning" },
+  agent_action_started: { title: "Action started", tone: "info" },
+  agent_action_completed: { title: "Action completed", tone: "success" },
+  agent_action_failed: { title: "Action failed", tone: "danger" },
+  agent_action_cancelled: { title: "Action cancelled", tone: "neutral" },
 };
 
 export function CustomerTimeline({ events }: { events: BusinessEvent[] }) {

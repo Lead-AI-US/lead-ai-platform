@@ -62,7 +62,7 @@ export default function AppLayout() {
           <Outlet />
         </main>
       </div>
-      <CommandPalette commands={commands} open={commandOpen} onOpenChange={setCommandOpen} />
+      <CommandPalette commands={commands} workspaceId={workspace?.id} open={commandOpen} onOpenChange={setCommandOpen} />
     </div>
   );
 }

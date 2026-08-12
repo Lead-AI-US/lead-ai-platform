@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 import { cn } from "@/lib/cn";
+import { apiPost } from "@/lib/api/client";
 import { useWorkspace } from "@/lib/workspace/WorkspaceProvider";
 
 const tabs = [
@@ -114,6 +115,29 @@ function Train() {
 }
 
 function Test() {
+  const { workspace } = useWorkspace();
+  const [message, setMessage] = useState("");
+  const [result, setResult] = useState<AgentTestResult | null>(null);
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  async function runTest() {
+    if (!workspace || !message.trim()) return;
+    setLoading(true);
+    setError("");
+    setResult(null);
+    try {
+      const response = await apiPost<AgentTestResult>(`/api/workspaces/${workspace.id}/agent/test`, {
+        message,
+      });
+      setResult(response);
+    } catch {
+      setError("Test request failed.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
   return (
     <Card>
       <CardHeader>
@@ -122,13 +146,38 @@ function Test() {
       <CardContent className="space-y-3">
         <textarea
           rows={4}
+          value={message}
+          onChange={(event) => setMessage(event.target.value)}
           placeholder="Ask a safe test question for this workspace"
           className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
         />
-        <Button type="button" disabled>
-          Test execution not configured
+        <Button type="button" onClick={() => void runTest()} disabled={!message.trim() || loading}>
+          {loading ? "Testing..." : "Run test"}
         </Button>
-        <p className="text-sm text-muted-foreground">Test mode will remain non-mutating until a server test endpoint marks events as synthetic.</p>
+        <p className="text-sm text-muted-foreground">Test mode uses approved knowledge and returns dry-run action simulations only.</p>
+        {error && <p className="text-sm text-destructive">{error}</p>}
+        {result && (
+          <div className="rounded-md border border-border p-3 text-sm">
+            <div className="mb-2 flex flex-wrap gap-2">
+              <Badge tone={result.persisted ? "danger" : "success"}>{result.persisted ? "Persisted" : "Dry run"}</Badge>
+              <Badge tone={result.usedFallback ? "warning" : "success"}>{result.usedFallback ? "Fallback" : "Structured output"}</Badge>
+              <Badge>{result.decision.intent}</Badge>
+            </div>
+            <p>{result.decision.response}</p>
+            {result.actionSimulations.length > 0 && (
+              <div className="mt-3 space-y-2">
+                {result.actionSimulations.map((action, index) => (
+                  <div key={`${action.code ?? "ok"}-${index}`} className="rounded-md bg-muted p-2">
+                    <div className="font-medium">{action.allowed ? "Allowed" : "Blocked"} action simulation</div>
+                    <div className="text-xs text-muted-foreground">
+                      Risk: {action.risk ?? "unknown"} · {action.reason ?? "Policy passed"}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
       </CardContent>
     </Card>
   );
@@ -188,4 +237,20 @@ function Detail({
       <dd className="mt-1">{tone ? <Badge tone={tone}>{value}</Badge> : <span>{value}</span>}</dd>
     </div>
   );
+}
+
+interface AgentTestResult {
+  mode: "test";
+  persisted: boolean;
+  usedFallback: boolean;
+  decision: {
+    intent: string;
+    response: string;
+  };
+  actionSimulations: {
+    risk?: string;
+    allowed: boolean;
+    reason?: string;
+    code?: string;
+  }[];
 }
