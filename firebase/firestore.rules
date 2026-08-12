@@ -48,6 +48,16 @@ service cloud.firestore {
         allow write: if false;
       }
 
+      match /customers/{customerId} {
+        allow read: if isActiveMember(workspaceId);
+        allow write: if false;
+      }
+
+      match /events/{eventId} {
+        allow read: if isActiveMember(workspaceId);
+        allow write: if false;
+      }
+
       match /knowledgeSources/{sourceId} {
         allow read: if isActiveMember(workspaceId);
         allow write: if false;
@@ -71,6 +81,26 @@ service cloud.firestore {
 
       match /auditLogs/{entryId} {
         allow read, write: if false;
+      }
+
+      match /agentActions/{actionId} {
+        allow read: if isActiveMember(workspaceId);
+        allow write: if false;
+      }
+
+      match /automationRuns/{runId} {
+        allow read: if isActiveMember(workspaceId);
+        allow write: if false;
+      }
+
+      match /automations/{automationId} {
+        allow read: if isActiveMember(workspaceId);
+        allow write: if false;
+      }
+
+      match /bookings/{bookingId} {
+        allow read: if isActiveMember(workspaceId);
+        allow write: if false;
       }
 
       match /rateLimits/{key} {

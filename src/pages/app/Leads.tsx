@@ -114,7 +114,7 @@ export default function Leads() {
                   </td>
                   <td className="p-3">
                     {lead.conversationId ? (
-                      <Link to="/app/conversations" className="text-xs font-medium text-primary underline">
+                      <Link to="/app/inbox" className="text-xs font-medium text-primary underline">
                         Open inbox
                       </Link>
                     ) : (

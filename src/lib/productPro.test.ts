@@ -11,8 +11,9 @@ describe("Product Pro navigation", () => {
     expect(labels).toEqual(
       expect.arrayContaining([
         "Overview",
+        "Inbox",
+        "Customers",
         "Leads",
-        "Conversations",
         "AI Agent",
         "Knowledge",
         "Automations",

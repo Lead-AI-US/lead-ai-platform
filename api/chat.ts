@@ -6,6 +6,8 @@ import { isOriginAllowed } from "../src/lib/http/originPolicy.js";
 import { checkRateLimit } from "../src/lib/http/rateLimit.js";
 import { orchestrateAssistantResponse } from "../src/lib/ai/orchestrator.js";
 import { trackEvent } from "../src/lib/analytics/track.js";
+import { upsertWebsiteCustomer } from "../src/server/customers/customerService.js";
+import { recordEvent } from "../src/server/events/eventService.js";
 import type { Workspace } from "../src/types/workspace.js";
 import type { KnowledgeSource } from "../src/types/knowledge.js";
 import type { Conversation, ConversationStatus, Message } from "../src/types/conversation.js";
@@ -107,6 +109,17 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       userMessage: input.message,
     });
     const durationMs = Date.now() - start;
+    const customer = await upsertWebsiteCustomer({
+      workspaceId: workspace.id,
+      visitorSessionId: input.visitorSessionId,
+      displayName: result.decision.collectedFields?.name,
+      email: result.decision.collectedFields?.email,
+      phone: result.decision.collectedFields?.phone,
+      intent: result.decision.intent,
+      conversationDelta: isNewConversation ? 1 : 0,
+      leadDelta: result.decision.shouldCreateLead ? 1 : 0,
+    });
+    const customerId = customer?.id;
 
     const assistantMsgRef = messagesRef.doc();
     const assistantMessage: Message = {
@@ -124,18 +137,36 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         id: leadRef.id,
         workspaceId: workspace.id,
         source: "website_chat",
+        customerId,
         name: result.decision.collectedFields?.name,
         email: result.decision.collectedFields?.email,
         phone: result.decision.collectedFields?.phone,
         message: input.message,
         status: "new",
+        stage: "new",
         conversationId,
+        intent: result.decision.intent,
+        qualification: {
+          confidence: result.decision.confidence,
+          reasons: result.decision.reason ? [result.decision.reason] : undefined,
+        },
         createdAt: now,
         updatedAt: now,
       };
       await leadRef.set({ ...lead });
       leadId = leadRef.id;
       await trackEvent({ workspaceId: workspace.id, eventName: "lead_created", actorType: "visitor" });
+      await recordEvent({
+        workspaceId: workspace.id,
+        type: "lead_created",
+        customerId,
+        leadId,
+        conversationId,
+        actor: { type: "ai" },
+        source: { channel: "website", integration: "website_widget" },
+        metadata: { intent: result.decision.intent, confidence: result.decision.confidence, source: "website_chat" },
+        occurredAt: now,
+      });
     }
 
     const conversationStatus: ConversationStatus = result.decision.shouldRequestHandoff ? "needs_human" : "active";
@@ -147,19 +178,68 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         channel: "website",
         status: conversationStatus,
         visitorSessionId: input.visitorSessionId,
+        customerId,
         leadId,
+        latestIntent: result.decision.intent,
         createdAt: now,
         updatedAt: now,
       };
       await conversationRef.set({ ...conversation });
       await trackEvent({ workspaceId: workspace.id, eventName: "conversation_started", actorType: "visitor" });
+      await recordEvent({
+        workspaceId: workspace.id,
+        type: "conversation_started",
+        customerId,
+        conversationId,
+        actor: { type: "customer", id: customerId },
+        source: { channel: "website", integration: "website_widget" },
+        metadata: { channel: "website" },
+        occurredAt: now,
+      });
     } else {
       await conversationRef.update({
         status: conversationStatus,
         updatedAt: new Date().toISOString(),
+        ...(customerId ? { customerId } : {}),
+        latestIntent: result.decision.intent,
         ...(leadId ? { leadId } : {}),
       });
     }
+
+    await recordEvent({
+      workspaceId: workspace.id,
+      type: "message_received",
+      customerId,
+      conversationId,
+      actor: { type: "customer", id: customerId },
+      source: { channel: "website", integration: "website_widget" },
+      metadata: { channel: "website" },
+      occurredAt: visitorMessage.createdAt,
+    });
+    await recordEvent({
+      workspaceId: workspace.id,
+      type: "message_sent",
+      customerId,
+      conversationId,
+      actor: { type: "ai" },
+      source: { channel: "website", integration: "website_widget" },
+      metadata: { durationMs, reason: result.fallbackReason ?? null },
+      occurredAt: assistantMessage.createdAt,
+    });
+    await recordEvent({
+      workspaceId: workspace.id,
+      type: result.usedFallback ? "knowledge_missing" : "intent_detected",
+      customerId,
+      conversationId,
+      actor: { type: "ai" },
+      source: { channel: "website", integration: "website_widget" },
+      metadata: {
+        intent: result.decision.intent,
+        confidence: result.decision.confidence,
+        knowledgeCount: approvedKnowledge.length,
+        reason: result.fallbackReason ?? result.decision.reason ?? null,
+      },
+    });
 
     await trackEvent({
       workspaceId: workspace.id,
@@ -173,6 +253,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       // event and BEFORE the response is returned to the visitor - the
       // dashboard can already see it by the time the widget renders a reply.
       await trackEvent({ workspaceId: workspace.id, eventName: "handoff_requested", actorType: "visitor" });
+      await recordEvent({
+        workspaceId: workspace.id,
+        type: "human_handoff_requested",
+        customerId,
+        conversationId,
+        actor: { type: "ai" },
+        source: { channel: "website", integration: "website_widget" },
+        metadata: { intent: result.decision.intent, reason: result.decision.reason ?? null },
+      });
     }
 
     return res.status(200).json({

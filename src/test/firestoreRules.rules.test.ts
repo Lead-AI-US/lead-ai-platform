@@ -92,6 +92,46 @@ beforeEach(async () => {
       createdAt: now,
       updatedAt: now,
     });
+    await setDoc(doc(db, "workspaces", WORKSPACE_A, "customers", "customer_a1"), {
+      id: "customer_a1",
+      workspaceId: WORKSPACE_A,
+      tags: [],
+      firstSeenAt: now,
+      lastSeenAt: now,
+      conversationCount: 1,
+      leadCount: 0,
+      createdAt: now,
+      updatedAt: now,
+    });
+    await setDoc(doc(db, "workspaces", WORKSPACE_B, "customers", "customer_b1"), {
+      id: "customer_b1",
+      workspaceId: WORKSPACE_B,
+      tags: [],
+      firstSeenAt: now,
+      lastSeenAt: now,
+      conversationCount: 1,
+      leadCount: 0,
+      createdAt: now,
+      updatedAt: now,
+    });
+    await setDoc(doc(db, "workspaces", WORKSPACE_A, "events", "event_a1"), {
+      id: "event_a1",
+      workspaceId: WORKSPACE_A,
+      type: "conversation_started",
+      actor: { type: "customer" },
+      source: { channel: "website" },
+      metadata: {},
+      occurredAt: now,
+    });
+    await setDoc(doc(db, "workspaces", WORKSPACE_B, "events", "event_b1"), {
+      id: "event_b1",
+      workspaceId: WORKSPACE_B,
+      type: "conversation_started",
+      actor: { type: "customer" },
+      source: { channel: "website" },
+      metadata: {},
+      occurredAt: now,
+    });
   });
 });
 
@@ -110,6 +150,18 @@ describe("Firestore rules — tenant isolation (release blocker)", () => {
   it("Workspace A user CANNOT read Workspace B's leads", async () => {
     const db = testEnv.authenticatedContext(USER_A).firestore();
     await assertFails(getDoc(doc(db, "workspaces", WORKSPACE_B, "leads", "lead_b1")));
+  });
+
+  it("Workspace A user can read own customers and events", async () => {
+    const db = testEnv.authenticatedContext(USER_A).firestore();
+    await assertSucceeds(getDoc(doc(db, "workspaces", WORKSPACE_A, "customers", "customer_a1")));
+    await assertSucceeds(getDoc(doc(db, "workspaces", WORKSPACE_A, "events", "event_a1")));
+  });
+
+  it("Workspace A user CANNOT read Workspace B customers or events", async () => {
+    const db = testEnv.authenticatedContext(USER_A).firestore();
+    await assertFails(getDoc(doc(db, "workspaces", WORKSPACE_B, "customers", "customer_b1")));
+    await assertFails(getDoc(doc(db, "workspaces", WORKSPACE_B, "events", "event_b1")));
   });
 
   it("Workspace B user CANNOT read Workspace A's leads (symmetric check)", async () => {
@@ -131,6 +183,23 @@ describe("Firestore rules — tenant isolation (release blocker)", () => {
         workspaceId: WORKSPACE_A,
         source: "manual",
         status: "new",
+      })
+    );
+  });
+
+  it("Client CANNOT write customer or business event records directly", async () => {
+    const db = testEnv.authenticatedContext(USER_A).firestore();
+    await assertFails(
+      setDoc(doc(db, "workspaces", WORKSPACE_A, "customers", "customer_a2"), {
+        id: "customer_a2",
+        workspaceId: WORKSPACE_A,
+      })
+    );
+    await assertFails(
+      setDoc(doc(db, "workspaces", WORKSPACE_A, "events", "event_a2"), {
+        id: "event_a2",
+        workspaceId: WORKSPACE_A,
+        type: "lead_created",
       })
     );
   });

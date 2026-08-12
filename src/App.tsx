@@ -10,6 +10,8 @@ const Signup = lazy(() => import("@/pages/Signup"));
 const Onboarding = lazy(() => import("@/pages/Onboarding"));
 const NotFound = lazy(() => import("@/pages/NotFound"));
 const Dashboard = lazy(() => import("@/pages/app/Dashboard"));
+const Customers = lazy(() => import("@/pages/app/Customers"));
+const CustomerProfile = lazy(() => import("@/pages/app/CustomerProfile"));
 const Leads = lazy(() => import("@/pages/app/Leads"));
 const Conversations = lazy(() => import("@/pages/app/Conversations"));
 const Knowledge = lazy(() => import("@/pages/app/Knowledge"));
@@ -39,6 +41,9 @@ export default function App() {
               <Route element={<ProtectedRoute />}>
                 <Route path="/app" element={<AppLayout />}>
                   <Route index element={<Dashboard />} />
+                  <Route path="inbox" element={<Conversations />} />
+                  <Route path="customers" element={<Customers />} />
+                  <Route path="customers/:customerId" element={<CustomerProfile />} />
                   <Route path="leads" element={<Leads />} />
                   <Route path="conversations" element={<Conversations />} />
                   <Route path="ai-agent" element={<AIAgent />} />

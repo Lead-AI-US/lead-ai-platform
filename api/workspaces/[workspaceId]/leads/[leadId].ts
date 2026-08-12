@@ -4,6 +4,8 @@ import { requireWorkspaceRole } from "../../../../src/lib/auth/serverAuth.js";
 import { getPathParam, parseBody, safeServerError } from "../../../../src/lib/http/apiHelpers.js";
 import { UpdateLeadStatusSchema } from "../../../../src/lib/validation/lead.js";
 import { recordAuditEvent } from "../../../../src/lib/audit/log.js";
+import { recordEvent } from "../../../../src/server/events/eventService.js";
+import type { Lead } from "../../../../src/types/lead.js";
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== "PATCH") {
@@ -28,6 +30,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const ref = db.collection("workspaces").doc(workspaceId).collection("leads").doc(leadId);
     const doc = await ref.get();
     if (!doc.exists) return res.status(404).json({ error: "lead_not_found" });
+    const lead = doc.data() as Lead;
 
     await ref.update({ status: input.status, updatedAt: new Date().toISOString() });
     await recordAuditEvent({
@@ -35,6 +38,16 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       event: "lead_status_changed",
       actorUid: ctx.uid,
       detail: { leadId, status: input.status },
+    });
+    await recordEvent({
+      workspaceId,
+      type: input.status === "qualified" ? "lead_qualified" : "lead_stage_changed",
+      customerId: lead.customerId,
+      leadId,
+      conversationId: lead.conversationId,
+      actor: { type: "user", id: ctx.uid },
+      source: { channel: lead.source },
+      metadata: { status: input.status, leadStatus: input.status },
     });
 
     return res.status(200).json({ ok: true });
