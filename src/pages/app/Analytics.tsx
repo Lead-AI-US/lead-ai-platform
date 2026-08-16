@@ -24,15 +24,20 @@ export default function Analytics() {
   const { workspace } = useWorkspace();
   const [range, setRange] = useState<TimeRange>("30d");
   const [summary, setSummary] = useState<AnalyticsSummary | null>(null);
+  const [journey, setJourney] = useState<JourneyAnalytics | null>(null);
   const [knowledgeGaps, setKnowledgeGaps] = useState<BusinessEvent[]>([]);
   const [error, setError] = useState(false);
 
   useEffect(() => {
     if (!workspace) return;
     setSummary(null);
+    setJourney(null);
     setError(false);
     apiGet<AnalyticsSummary>(`/api/workspaces/${workspace.id}/analytics/summary?timeRange=${range}`)
       .then(setSummary)
+      .catch(() => setError(true));
+    apiGet<JourneyAnalytics>(`/api/workspaces/${workspace.id}/analytics/journey?timeRange=${range}`)
+      .then(setJourney)
       .catch(() => setError(true));
     if (db) {
       const gapsQuery = query(
@@ -87,6 +92,38 @@ export default function Analytics() {
               ))}
             </CardContent>
           </Card>
+          {journey && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Customer journey</CardTitle>
+              </CardHeader>
+              <CardContent className="grid gap-4 md:grid-cols-2">
+                <div className="space-y-2">
+                  {Object.entries(journey.eventCounts)
+                    .sort((a, b) => b[1] - a[1])
+                    .slice(0, 8)
+                    .map(([type, count]) => (
+                      <FunnelRow key={type} step={formatEventType(type)} count={count} max={journey.totalEvents || 1} />
+                    ))}
+                  {journey.totalEvents === 0 && <p className="text-sm text-muted-foreground">No journey events in this range.</p>}
+                </div>
+                <div className="space-y-2">
+                  {journey.transitions.length ? (
+                    journey.transitions.map((transition) => (
+                      <div key={`${transition.from}-${transition.to}`} className="rounded-md border border-border p-3 text-sm">
+                        <div className="font-medium">
+                          {formatEventType(transition.from)} {"->"} {formatEventType(transition.to)}
+                        </div>
+                        <div className="text-xs text-muted-foreground">{transition.count} transition{transition.count === 1 ? "" : "s"}</div>
+                      </div>
+                    ))
+                  ) : (
+                    <p className="text-sm text-muted-foreground">No repeated conversation transitions yet.</p>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          )}
           <Card>
             <CardHeader>
               <CardTitle>Knowledge gaps</CardTitle>
@@ -110,6 +147,12 @@ export default function Analytics() {
   );
 }
 
+interface JourneyAnalytics {
+  eventCounts: Record<string, number>;
+  transitions: { from: string; to: string; count: number }[];
+  totalEvents: number;
+}
+
 function Metric({ label, value }: { label: string; value: number }) {
   return (
     <Card>
@@ -119,6 +162,10 @@ function Metric({ label, value }: { label: string; value: number }) {
       </CardContent>
     </Card>
   );
+}
+
+function formatEventType(type: string): string {
+  return type.replace(/_/g, " ");
 }
 
 function FunnelRow({ step, count, max }: { step: string; count: number; max: number }) {

@@ -1,25 +1,55 @@
 import { Search, X } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { apiGet } from "@/lib/api/client";
 import { searchCommands, type CommandAction } from "@/lib/commandRegistry";
 
 export function CommandPalette({
   commands,
+  workspaceId,
   open,
   onOpenChange,
 }: {
   commands: CommandAction[];
+  workspaceId?: string;
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }) {
   const [query, setQuery] = useState("");
+  const [workspaceResults, setWorkspaceResults] = useState<WorkspaceSearchResult[]>([]);
   const inputRef = useRef<HTMLInputElement>(null);
+  const navigate = useNavigate();
   const results = useMemo(() => searchCommands(commands, query), [commands, query]);
 
   useEffect(() => {
     if (!open) return;
     setQuery("");
+    setWorkspaceResults([]);
     window.setTimeout(() => inputRef.current?.focus(), 0);
   }, [open]);
+
+  useEffect(() => {
+    if (!open || !workspaceId || query.trim().length < 2) {
+      setWorkspaceResults([]);
+      return;
+    }
+
+    const controller = new AbortController();
+    const timeout = window.setTimeout(() => {
+      apiGet<WorkspaceSearchResponse>(`/api/workspaces/${workspaceId}/search?q=${encodeURIComponent(query)}`)
+        .then((response) => {
+          if (!controller.signal.aborted) setWorkspaceResults(response.results);
+        })
+        .catch(() => {
+          if (!controller.signal.aborted) setWorkspaceResults([]);
+        });
+    }, 200);
+
+    return () => {
+      controller.abort();
+      window.clearTimeout(timeout);
+    };
+  }, [open, query, workspaceId]);
 
   useEffect(() => {
     if (!open) return;
@@ -63,6 +93,28 @@ export function CommandPalette({
           </button>
         </div>
         <div className="max-h-[420px] overflow-y-auto p-2">
+          {workspaceResults.length > 0 && (
+            <div className="mb-2">
+              <p className="px-3 py-1 text-xs font-semibold uppercase text-muted-foreground">Workspace</p>
+              {workspaceResults.map((result) => (
+                <button
+                  key={`${result.type}:${result.id}`}
+                  type="button"
+                  className="grid w-full gap-1 rounded-md px-3 py-2 text-left hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                  onClick={() => {
+                    navigate(result.href);
+                    onOpenChange(false);
+                  }}
+                >
+                  <span className="text-sm font-medium">{result.title}</span>
+                  <span className="text-xs text-muted-foreground">
+                    {result.type.replace("_", " ")} · {result.subtitle}
+                  </span>
+                </button>
+              ))}
+            </div>
+          )}
+          <p className="px-3 py-1 text-xs font-semibold uppercase text-muted-foreground">Commands</p>
           {results.map((command) => (
             <button
               key={command.id}
@@ -77,9 +129,21 @@ export function CommandPalette({
               <span className="text-xs text-muted-foreground">{command.description}</span>
             </button>
           ))}
-          {results.length === 0 && <p className="p-4 text-sm text-muted-foreground">No matching commands.</p>}
+          {results.length === 0 && workspaceResults.length === 0 && <p className="p-4 text-sm text-muted-foreground">No matching results.</p>}
         </div>
       </section>
     </div>
   );
+}
+
+interface WorkspaceSearchResponse {
+  results: WorkspaceSearchResult[];
+}
+
+interface WorkspaceSearchResult {
+  id: string;
+  type: string;
+  title: string;
+  subtitle: string;
+  href: string;
 }

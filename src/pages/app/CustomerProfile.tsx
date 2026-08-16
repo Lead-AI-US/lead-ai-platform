@@ -5,9 +5,11 @@ import { CalendarClock, Inbox, StickyNote, UserRound } from "lucide-react";
 import { PageHeader } from "@/app/PageHeader";
 import { CustomerTimeline } from "@/components/CustomerTimeline";
 import { Badge } from "@/components/ui/Badge";
+import { Button } from "@/components/ui/Button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { db } from "@/lib/firebase/client";
+import { apiPost } from "@/lib/api/client";
 import { formatDateTime } from "@/lib/format";
 import { useWorkspace } from "@/lib/workspace/WorkspaceProvider";
 import type { Conversation } from "@/types/conversation";
@@ -92,11 +94,76 @@ export default function CustomerProfile() {
 
           <RelatedCard icon={Inbox} title="Conversations" count={conversations.length} href="/app/inbox" />
           <RelatedCard icon={UserRound} title="Related leads" count={leads.length} href="/app/leads" />
+          <CustomerActions workspaceId={workspace.id} customerId={customer.id} />
           <RelatedCard icon={CalendarClock} title="Bookings" count={0} label="Not configured" />
           <RelatedCard icon={StickyNote} title="Internal notes" count={0} label="Not configured" />
         </div>
       </div>
     </div>
+  );
+}
+
+function CustomerActions({ workspaceId, customerId }: { workspaceId: string; customerId: string }) {
+  const [tag, setTag] = useState("");
+  const [note, setNote] = useState("");
+  const [status, setStatus] = useState("");
+
+  async function runAction(type: "add_customer_tag" | "create_internal_note") {
+    const value = type === "add_customer_tag" ? tag.trim() : note.trim();
+    if (!value) return;
+    setStatus("Saving...");
+    try {
+      await apiPost(`/api/workspaces/${workspaceId}/actions`, {
+        type,
+        workspaceId,
+        customerId,
+        idempotencyKey: `operator:${customerId}:${type}:${Date.now()}`,
+        proposedBy: { type: "user" },
+        rationale: type === "add_customer_tag" ? "Operator added a customer tag." : "Operator created an internal note.",
+        payload: type === "add_customer_tag" ? { tag: value } : { note: value },
+      });
+      if (type === "add_customer_tag") setTag("");
+      if (type === "create_internal_note") setNote("");
+      setStatus("Action saved.");
+    } catch {
+      setStatus("Action failed.");
+    }
+  }
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Actions</CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-3">
+        <label className="block text-sm">
+          <span className="sr-only">Customer tag</span>
+          <input
+            value={tag}
+            onChange={(event) => setTag(event.target.value)}
+            placeholder="Add customer tag"
+            className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
+          />
+        </label>
+        <Button type="button" variant="secondary" onClick={() => void runAction("add_customer_tag")} disabled={!tag.trim()} className="w-full">
+          Add tag
+        </Button>
+        <label className="block text-sm">
+          <span className="sr-only">Internal note</span>
+          <textarea
+            value={note}
+            onChange={(event) => setNote(event.target.value)}
+            placeholder="Create internal note"
+            rows={3}
+            className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
+          />
+        </label>
+        <Button type="button" variant="secondary" onClick={() => void runAction("create_internal_note")} disabled={!note.trim()} className="w-full">
+          Add note
+        </Button>
+        {status && <p className="text-xs text-muted-foreground">{status}</p>}
+      </CardContent>
+    </Card>
   );
 }
 

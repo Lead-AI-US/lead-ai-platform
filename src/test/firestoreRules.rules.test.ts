@@ -132,6 +132,54 @@ beforeEach(async () => {
       metadata: {},
       occurredAt: now,
     });
+    await setDoc(doc(db, "workspaces", WORKSPACE_A, "agentActions", "action_a1"), {
+      id: "action_a1",
+      workspaceId: WORKSPACE_A,
+      type: "create_lead",
+      status: "completed",
+      risk: "low",
+      idempotencyKey: "test-action-a1",
+      proposedBy: { type: "ai" },
+      requiresApproval: false,
+      createdAt: now,
+      updatedAt: now,
+    });
+    await setDoc(doc(db, "workspaces", WORKSPACE_B, "agentActions", "action_b1"), {
+      id: "action_b1",
+      workspaceId: WORKSPACE_B,
+      type: "create_lead",
+      status: "completed",
+      risk: "low",
+      idempotencyKey: "test-action-b1",
+      proposedBy: { type: "ai" },
+      requiresApproval: false,
+      createdAt: now,
+      updatedAt: now,
+    });
+    await setDoc(doc(db, "workspaces", WORKSPACE_A, "automationRuns", "run_a1"), {
+      id: "run_a1",
+      workspaceId: WORKSPACE_A,
+      automationId: "auto_a1",
+      sourceEventId: "event_a1",
+      status: "completed",
+      actionsAttempted: 1,
+      actionsCompleted: 1,
+      retryCount: 0,
+      startedAt: now,
+      completedAt: now,
+    });
+    await setDoc(doc(db, "workspaces", WORKSPACE_B, "automationRuns", "run_b1"), {
+      id: "run_b1",
+      workspaceId: WORKSPACE_B,
+      automationId: "auto_b1",
+      sourceEventId: "event_b1",
+      status: "completed",
+      actionsAttempted: 1,
+      actionsCompleted: 1,
+      retryCount: 0,
+      startedAt: now,
+      completedAt: now,
+    });
   });
 });
 
@@ -200,6 +248,35 @@ describe("Firestore rules — tenant isolation (release blocker)", () => {
         id: "event_a2",
         workspaceId: WORKSPACE_A,
         type: "lead_created",
+      })
+    );
+  });
+
+  it("Workspace A user can read own agent actions and automation runs", async () => {
+    const db = testEnv.authenticatedContext(USER_A).firestore();
+    await assertSucceeds(getDoc(doc(db, "workspaces", WORKSPACE_A, "agentActions", "action_a1")));
+    await assertSucceeds(getDoc(doc(db, "workspaces", WORKSPACE_A, "automationRuns", "run_a1")));
+  });
+
+  it("Workspace A user CANNOT read Workspace B agent actions or automation runs", async () => {
+    const db = testEnv.authenticatedContext(USER_A).firestore();
+    await assertFails(getDoc(doc(db, "workspaces", WORKSPACE_B, "agentActions", "action_b1")));
+    await assertFails(getDoc(doc(db, "workspaces", WORKSPACE_B, "automationRuns", "run_b1")));
+  });
+
+  it("Client CANNOT write agent actions or automation runs directly", async () => {
+    const db = testEnv.authenticatedContext(USER_A).firestore();
+    await assertFails(
+      setDoc(doc(db, "workspaces", WORKSPACE_A, "agentActions", "action_a2"), {
+        id: "action_a2",
+        workspaceId: WORKSPACE_A,
+        type: "create_lead",
+      })
+    );
+    await assertFails(
+      setDoc(doc(db, "workspaces", WORKSPACE_A, "automationRuns", "run_a2"), {
+        id: "run_a2",
+        workspaceId: WORKSPACE_A,
       })
     );
   });

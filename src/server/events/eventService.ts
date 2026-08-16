@@ -34,6 +34,9 @@ export async function recordEvent(params: {
   customerId?: string;
   leadId?: string;
   conversationId?: string;
+  agentActionId?: string;
+  sourceEventId?: string;
+  automationRunId?: string;
   actor: { type: BusinessEventActorType; id?: string };
   source?: { channel?: string; integration?: string };
   metadata?: Record<string, unknown>;
@@ -53,6 +56,9 @@ export async function recordEvent(params: {
       customerId: params.customerId,
       leadId: params.leadId,
       conversationId: params.conversationId,
+      agentActionId: params.agentActionId,
+      sourceEventId: params.sourceEventId,
+      automationRunId: params.automationRunId,
       actor: params.actor,
       source: params.source ?? {},
       metadata: sanitizeEventMetadata(params.metadata),
@@ -95,6 +101,8 @@ export function toTimelineItems(events: BusinessEvent[]): TimelineItem[] {
       customerId: event.customerId,
       leadId: event.leadId,
       conversationId: event.conversationId,
+      agentActionId: event.agentActionId,
+      automationRunId: event.automationRunId,
       actorType: event.actor.type,
       occurredAt: event.occurredAt,
     }));
@@ -132,6 +140,13 @@ function titleForEvent(event: BusinessEvent): string {
     automation_started: "Automation started",
     automation_completed: "Automation completed",
     automation_failed: "Automation failed",
+    agent_action_proposed: "Agent action proposed",
+    agent_action_validated: "Agent action validated",
+    agent_action_approval_required: "Agent action approval required",
+    agent_action_started: "Agent action started",
+    agent_action_completed: "Agent action completed",
+    agent_action_failed: "Agent action failed",
+    agent_action_cancelled: "Agent action cancelled",
   };
   return titles[event.type];
 }
