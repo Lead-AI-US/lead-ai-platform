@@ -3,38 +3,62 @@
 @tailwind utilities;
 
 :root {
-  --background: 0 0% 100%;
-  --foreground: 222 20% 12%;
-  --muted: 220 14% 96%;
-  --muted-foreground: 220 9% 40%;
+  color-scheme: light;
+  --background: 210 40% 98%;
+  --foreground: 222 29% 10%;
+  --surface: 0 0% 100%;
+  --surface-elevated: 210 33% 99%;
+  --surface-interactive: 220 29% 96%;
+  --muted: 220 24% 95%;
+  --muted-foreground: 220 10% 41%;
   --card: 0 0% 100%;
-  --card-foreground: 222 20% 12%;
-  --border: 220 14% 90%;
-  --primary: 222 47% 20%;
+  --card-foreground: 222 29% 10%;
+  --border: 220 18% 88%;
+  --border-hover: 220 18% 78%;
+  --primary: 222 54% 17%;
   --primary-foreground: 0 0% 100%;
+  --accent: 190 85% 35%;
+  --accent-foreground: 190 100% 10%;
+  --accent-soft: 190 80% 94%;
   --destructive: 0 72% 51%;
   --destructive-foreground: 0 0% 100%;
   --success: 158 70% 31%;
   --warning: 35 92% 42%;
+  --info: 214 90% 52%;
   --focus: 222 90% 56%;
+  --shadow: 220 24% 18%;
+  --glow: 190 95% 44%;
   --radius: 0.5rem;
+  --radius-xl: 1rem;
+  --space-page: clamp(1rem, 2vw, 2rem);
 }
 
 .dark {
-  --background: 222 30% 8%;
+  color-scheme: dark;
+  --background: 222 36% 7%;
   --foreground: 210 20% 96%;
+  --surface: 222 30% 9%;
+  --surface-elevated: 222 28% 12%;
+  --surface-interactive: 222 21% 16%;
   --muted: 222 20% 14%;
-  --muted-foreground: 220 10% 65%;
-  --card: 222 26% 11%;
+  --muted-foreground: 220 12% 68%;
+  --card: 222 28% 10%;
   --card-foreground: 210 20% 96%;
   --border: 222 18% 20%;
-  --primary: 210 90% 60%;
+  --border-hover: 218 20% 30%;
+  --primary: 190 88% 62%;
   --primary-foreground: 222 30% 8%;
+  --accent: 190 88% 58%;
+  --accent-foreground: 190 100% 8%;
+  --accent-soft: 190 82% 13%;
   --destructive: 0 63% 55%;
   --destructive-foreground: 0 0% 100%;
   --success: 153 58% 55%;
   --warning: 38 92% 62%;
+  --info: 214 92% 70%;
   --focus: 214 100% 75%;
+  --shadow: 220 80% 2%;
+  --glow: 190 95% 58%;
 }
 
 * {
@@ -42,8 +66,13 @@
 }
 
 body {
-  background-color: hsl(var(--background));
+  min-height: 100vh;
+  background:
+    radial-gradient(circle at top left, hsl(var(--accent-soft) / 0.58), transparent 34rem),
+    linear-gradient(135deg, hsl(var(--background)), hsl(var(--surface-elevated)));
   color: hsl(var(--foreground));
+  font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  text-rendering: optimizeLegibility;
 }
 
 button,
@@ -52,4 +81,40 @@ input,
 textarea,
 select {
   outline-color: hsl(var(--focus));
+}
+
+::selection {
+  background: hsl(var(--accent) / 0.2);
+}
+
+@layer utilities {
+  .surface-grid {
+    background-image:
+      linear-gradient(hsl(var(--border) / 0.44) 1px, transparent 1px),
+      linear-gradient(90deg, hsl(var(--border) / 0.44) 1px, transparent 1px);
+    background-size: 48px 48px;
+    mask-image: linear-gradient(to bottom, black, transparent 78%);
+  }
+
+  .spatial-glow {
+    box-shadow:
+      0 1px 0 hsl(0 0% 100% / 0.36) inset,
+      0 24px 60px hsl(var(--shadow) / 0.12),
+      0 0 0 1px hsl(var(--border) / 0.74);
+  }
+
+  .text-balance {
+    text-wrap: balance;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+  }
 }

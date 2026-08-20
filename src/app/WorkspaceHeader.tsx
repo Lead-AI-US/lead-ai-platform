@@ -17,19 +17,19 @@ export function WorkspaceHeader({
   const { theme, setTheme } = useTheme();
 
   return (
-    <header className="sticky top-0 z-30 flex min-h-16 items-center justify-between gap-3 border-b border-border bg-background/95 px-4 backdrop-blur">
+    <header className="sticky top-0 z-30 flex min-h-16 items-center justify-between gap-3 border-b border-border/80 bg-surface/82 px-4 backdrop-blur-xl">
       <div className="flex min-w-0 items-center gap-3">
         <button
           type="button"
           onClick={onMenuClick}
-          className="rounded-md p-2 hover:bg-muted md:hidden"
+          className="rounded-md p-2 hover:bg-surface-interactive md:hidden"
           aria-label="Open menu"
         >
           <Menu className="h-5 w-5" />
         </button>
         <div className="min-w-0">
-          <span className="block truncate text-sm font-semibold">{workspace?.name ?? "Lead.AI"}</span>
-          <span className="hidden text-xs text-muted-foreground sm:block">Business operating system</span>
+          <span className="block truncate text-sm font-semibold tracking-tight">{workspace?.name ?? "Lead.AI"}</span>
+          <span className="hidden text-xs text-muted-foreground sm:block">AI business operating layer</span>
         </div>
         {workspace && <Badge className="hidden capitalize sm:inline-flex">{workspace.status}</Badge>}
       </div>
@@ -37,7 +37,7 @@ export function WorkspaceHeader({
         <button
           type="button"
           onClick={onCommandClick}
-          className="hidden min-h-9 w-72 items-center justify-between rounded-md border border-border bg-background px-3 text-sm text-muted-foreground hover:bg-muted lg:flex"
+          className="hidden min-h-9 w-80 items-center justify-between rounded-md border border-border bg-card/80 px-3 text-sm text-muted-foreground shadow-soft transition-colors hover:border-border-hover hover:bg-surface lg:flex"
         >
           <span className="inline-flex items-center gap-2">
             <Search className="h-4 w-4" aria-hidden="true" />
@@ -48,7 +48,7 @@ export function WorkspaceHeader({
         <button
           type="button"
           onClick={onCommandClick}
-          className="rounded-md p-2 text-muted-foreground hover:bg-muted hover:text-foreground lg:hidden"
+          className="rounded-md p-2 text-muted-foreground hover:bg-surface-interactive hover:text-foreground lg:hidden"
           aria-label="Open command palette"
         >
           <Search className="h-4 w-4" aria-hidden="true" />
@@ -82,7 +82,7 @@ function ThemeButton({
       onClick={onClick}
       aria-label={label}
       aria-pressed={active}
-      className={`rounded-md p-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary ${active ? "bg-muted text-foreground" : "text-muted-foreground hover:bg-muted"}`}
+      className={`rounded-md p-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary ${active ? "bg-surface-interactive text-foreground" : "text-muted-foreground hover:bg-surface-interactive"}`}
     >
       <Icon className="h-4 w-4" />
     </button>

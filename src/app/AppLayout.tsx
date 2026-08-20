@@ -4,6 +4,7 @@ import { Sidebar } from "./Sidebar";
 import { WorkspaceHeader } from "./WorkspaceHeader";
 import { cn } from "@/lib/cn";
 import { CommandPalette } from "@/components/CommandPalette";
+import { SignalField } from "@/components/motion/SignalField";
 import { createCommandRegistry } from "@/lib/commandRegistry";
 import { useTheme } from "@/lib/theme/useTheme";
 import { useWorkspace } from "@/lib/workspace/WorkspaceProvider";
@@ -42,23 +43,24 @@ export default function AppLayout() {
   );
 
   return (
-    <div className="flex min-h-screen bg-background">
-      <aside className="hidden w-72 shrink-0 border-r border-border md:block">
+    <div className="relative flex min-h-screen overflow-hidden bg-background">
+      <SignalField />
+      <aside className="relative z-10 hidden w-72 shrink-0 border-r border-border/80 bg-surface/74 backdrop-blur-xl md:block">
         <Sidebar />
       </aside>
 
       {mobileNavOpen && (
         <div className="fixed inset-0 z-40 md:hidden">
-          <div className="absolute inset-0 bg-black/40" onClick={() => setMobileNavOpen(false)} aria-hidden="true" />
-          <aside className="relative z-50 h-full w-72 bg-background border-r border-border">
+          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setMobileNavOpen(false)} aria-hidden="true" />
+          <aside className="relative z-50 h-full w-72 border-r border-border bg-surface/96 shadow-lift backdrop-blur-xl">
             <Sidebar />
           </aside>
         </div>
       )}
 
-      <div className={cn("flex min-w-0 flex-1 flex-col")}>
+      <div className={cn("relative z-10 flex min-w-0 flex-1 flex-col")}>
         <WorkspaceHeader onMenuClick={() => setMobileNavOpen(true)} onCommandClick={() => setCommandOpen(true)} />
-        <main className="mx-auto w-full max-w-7xl flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">
+        <main className="mx-auto w-full max-w-7xl flex-1 overflow-y-auto px-4 py-5 sm:px-6 lg:px-8 lg:py-7">
           <Outlet />
         </main>
       </div>
