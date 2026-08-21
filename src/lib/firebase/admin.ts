@@ -6,8 +6,9 @@
  *
  * Fails safely: if the required env vars aren't set (local dev without
  * secrets, a preview deploy that hasn't been configured yet), getAdminApp()
- * returns null instead of throwing at import time. Callers must check for
- * null and return a 501/503, never fabricate data.
+ * returns null instead of throwing at import time. For local Firebase
+ * emulators, a project id plus emulator hosts is enough. Callers must check
+ * for null and return a 501/503, never fabricate data.
  */
 import { getApps, initializeApp, cert, type App } from "firebase-admin/app";
 import { getAuth, type Auth } from "firebase-admin/auth";
@@ -30,7 +31,11 @@ function readAdminConfig() {
   const clientEmail = process.env.FIREBASE_CLIENT_EMAIL;
   // Vercel/most env UIs store multi-line keys with literal "\n" - restore real newlines.
   const privateKey = process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, "\n");
+  const usesFirebaseEmulator = Boolean(
+    process.env.FIRESTORE_EMULATOR_HOST || process.env.FIREBASE_AUTH_EMULATOR_HOST
+  );
 
+  if (projectId && usesFirebaseEmulator) return { projectId, clientEmail: null, privateKey: null };
   if (!projectId || !clientEmail || !privateKey) return null;
   return { projectId, clientEmail, privateKey };
 }
@@ -45,7 +50,12 @@ export function getAdminApp(): App | null {
     return null;
   }
 
-  cachedApp = getApps().length > 0 ? getApps()[0] : initializeApp({ credential: cert(config) });
+  cachedApp =
+    getApps().length > 0
+      ? getApps()[0]
+      : config.clientEmail && config.privateKey
+        ? initializeApp({ credential: cert(config) })
+        : initializeApp({ projectId: config.projectId });
   return cachedApp;
 }
 

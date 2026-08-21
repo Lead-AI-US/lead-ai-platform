@@ -68,7 +68,8 @@ No backend authorization or Firestore rules were moved into client UI state.
 
 The shell keeps the existing desktop sidebar and mobile overlay navigation.
 Cards and dashboard metrics use responsive grids that collapse into stacked
-mobile sections. Tables and detailed mobile rewrites remain later Phase 8 work.
+mobile sections. Phase 8J hardened the Leads route so mobile uses readable
+lead cards while desktop keeps the denser table.
 
 ## 3D Strategy
 
@@ -95,7 +96,8 @@ fallback requirements are met.
 ## Accessibility Strategy
 
 - Focus rings remain visible.
-- Command palette keeps dialog semantics.
+- Command palette keeps dialog semantics, restores focus, and supports
+  Escape, Arrow Up, Arrow Down, and Enter.
 - Sidebar labels remain text-visible and not icon-only.
 - Spatial effects are decorative and do not carry unique information.
 - Reduced motion is respected globally.
@@ -126,12 +128,95 @@ authenticated app visual QA: MANUAL_REQUIRED
 The authenticated app shell cannot be visually completed locally until Firebase
 Preview access is available or a real internal test account is supplied.
 
+Phase 8J authenticated emulator QA:
+
+```text
+Firebase Auth emulator signup: GREEN
+Firebase Auth emulator login: GREEN
+Firestore emulator membership resolution: GREEN
+ProtectedRoute authenticated /app render: GREEN
+Authenticated route sweep: GREEN
+```
+
+QA method:
+
+- Firebase Auth emulator and Firestore emulator ran with project
+  `demo-lead-ai-platform`.
+- Client Firebase SDK used explicit `VITE_FIREBASE_AUTH_EMULATOR_HOST` and
+  `VITE_FIRESTORE_EMULATOR_HOST` values.
+- Admin SDK emulator initialization used `FIREBASE_PROJECT_ID` and emulator
+  host vars, with no service-account secrets.
+- A synthetic internal user signed up through the real `/signup` form.
+- Workspace, membership, and representative tenant records were seeded into
+  the Firestore emulator; the browser then signed in normally and reached
+  `/app` through `ProtectedRoute` and `WorkspaceProvider`.
+- `vercel dev` was attempted, but in this session it served HTML while Vite
+  module URLs returned 404, so authenticated visual QA used direct Vite. This
+  means serverless API visual interactions remain local-not-executed unless
+  `vercel dev` is repaired.
+
+Authenticated route inventory:
+
+| Route | Feature | Auth Required | Tenant Data | Phase 8J QA |
+|---|---|---:|---:|---|
+| `/app` | Dashboard | Yes | Yes | GREEN |
+| `/app/inbox` | Inbox / conversations | Yes | Yes | GREEN |
+| `/app/customers` | Customers | Yes | Yes | GREEN |
+| `/app/customers/:customerId` | Customer profile | Yes | Yes | GREEN |
+| `/app/leads` | Leads | Yes | Yes | GREEN |
+| `/app/conversations` | Conversations alias | Yes | Yes | GREEN |
+| `/app/ai-agent` | AI Agent Test | Yes | Yes | GREEN |
+| `/app/knowledge` | Knowledge | Yes | Yes | GREEN |
+| `/app/automations` | Automations | Yes | Yes | GREEN |
+| `/app/analytics` | Analytics | Yes | Yes | GREEN |
+| `/app/integrations` | Integrations | Yes | Yes | GREEN |
+| `/app/ai-assets` | AI Assets | Yes | Yes | GREEN |
+| `/app/developer` | Developer Center | Yes | Yes | GREEN |
+| `/app/settings` | Settings | Yes | Yes | GREEN |
+
+Viewport evidence:
+
+```text
+1440x1000: GREEN
+1280x900: GREEN
+1024x900: GREEN
+768x1000: GREEN
+430x932: GREEN
+390x844: GREEN
+375x812: GREEN
+horizontal overflow failures: 0
+blank route failures: 0
+checks recorded: 105
+```
+
+Keyboard and theme evidence:
+
+```text
+Ctrl+K command palette open: GREEN
+Escape close: GREEN
+Arrow Down focus move: GREEN
+Arrow Up focus move: GREEN
+focus restoration on close: GREEN
+dark mode applied across tested viewports: GREEN
+```
+
+Manual visual observations:
+
+- Desktop dashboard hierarchy, cards, badges, and activity feed are readable.
+- Mobile dashboard stacks correctly with no visible overlap.
+- Dark mode has deliberate surfaces and readable status chips.
+- Leads mobile table compression was found and fixed with mobile lead cards.
+- API-backed widgets can show designed local error states when direct Vite is
+  used without Vercel serverless functions.
+
 ## Known Limitations
 
 - Lead detail drawer, automation visual builder, full AI Copilot redesign,
   executive analytics polish, and public 3D landing hero are not complete in
   this first implementation batch.
-- Browser visual QA depends on available browser tooling.
+- Browser visual QA used local Playwright against emulators.
+- Local `vercel dev` frontend serving remained unreliable in this environment;
+  direct Vite was used for authenticated visual QA.
 - Production validation is blocked by infrastructure.
 
 ## Infrastructure Blockers

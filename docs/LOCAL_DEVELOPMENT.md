@@ -55,6 +55,38 @@ live OpenAI key. Everything above `/api/chat`'s model call has been tested
 without them (dependency-injected fakes); the live integration itself is
 BLOCKED ON CONFIGURATION, not fabricated.
 
+## Authenticated local QA with Firebase emulators
+
+Authenticated local QA can run against the Firebase Auth and Firestore
+emulators without service-account secrets. Use explicit demo values only:
+
+```bash
+npx firebase emulators:start --only auth,firestore --project demo-lead-ai-platform
+
+FIREBASE_PROJECT_ID=demo-lead-ai-platform \
+FIRESTORE_EMULATOR_HOST=127.0.0.1:8080 \
+FIREBASE_AUTH_EMULATOR_HOST=127.0.0.1:9099 \
+VITE_FIREBASE_API_KEY=demo-api-key \
+VITE_FIREBASE_AUTH_DOMAIN=demo-lead-ai-platform.firebaseapp.com \
+VITE_FIREBASE_PROJECT_ID=demo-lead-ai-platform \
+VITE_FIREBASE_APP_ID=demo-app-id \
+VITE_FIRESTORE_EMULATOR_HOST=127.0.0.1:8080 \
+VITE_FIREBASE_AUTH_EMULATOR_HOST=127.0.0.1:9099 \
+vercel dev --listen 127.0.0.1:5173
+```
+
+When `vercel dev` serves the Vite dev modules correctly, this path exercises
+Firebase Auth, Firestore Security Rules, server-side ID-token verification,
+workspace membership resolution, and the real `/api/workspaces` onboarding
+boundary. It does not create an authentication bypass and must not be used to
+claim live Firebase/OpenAI validation.
+
+For visual QA only, direct Vite can be used with the same `VITE_*` emulator
+variables. Seed workspace membership through the emulator/Admin SDK, then sign
+in normally through Firebase Auth. This still exercises `ProtectedRoute`,
+`WorkspaceProvider`, Firebase Auth state, and Firestore rules, but it does not
+exercise Vercel serverless API routes.
+
 ## Deploying Firestore rules/indexes (once a real project exists)
 
 ```bash

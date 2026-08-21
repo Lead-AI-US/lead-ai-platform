@@ -1,5 +1,5 @@
 import { Search, X } from "lucide-react";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type KeyboardEvent as ReactKeyboardEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import { apiGet } from "@/lib/api/client";
 import { searchCommands, type CommandAction } from "@/lib/commandRegistry";
@@ -17,15 +17,49 @@ export function CommandPalette({
 }) {
   const [query, setQuery] = useState("");
   const [workspaceResults, setWorkspaceResults] = useState<WorkspaceSearchResult[]>([]);
+  const [activeIndex, setActiveIndex] = useState(-1);
   const inputRef = useRef<HTMLInputElement>(null);
+  const previousFocusRef = useRef<HTMLElement | null>(null);
+  const resultRefs = useRef<Array<HTMLButtonElement | null>>([]);
   const navigate = useNavigate();
   const results = useMemo(() => searchCommands(commands, query), [commands, query]);
+  const resultCount = workspaceResults.length + results.length;
+
+  const activateResult = useCallback(
+    (index: number) => {
+      if (index < 0 || index >= resultCount) return;
+      if (index < workspaceResults.length) {
+        const result = workspaceResults[index];
+        navigate(result.href);
+      } else {
+        void results[index - workspaceResults.length].run();
+      }
+      onOpenChange(false);
+    },
+    [navigate, onOpenChange, resultCount, results, workspaceResults]
+  );
+
+  const focusResult = useCallback(
+    (index: number) => {
+      if (resultCount === 0) return;
+      const nextIndex = (index + resultCount) % resultCount;
+      setActiveIndex(nextIndex);
+      resultRefs.current[nextIndex]?.focus();
+    },
+    [resultCount]
+  );
 
   useEffect(() => {
     if (!open) return;
+    previousFocusRef.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;
     setQuery("");
     setWorkspaceResults([]);
+    setActiveIndex(-1);
     window.setTimeout(() => inputRef.current?.focus(), 0);
+
+    return () => {
+      previousFocusRef.current?.focus();
+    };
   }, [open]);
 
   useEffect(() => {
@@ -62,7 +96,40 @@ export function CommandPalette({
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [onOpenChange, open]);
 
+  useEffect(() => {
+    resultRefs.current = resultRefs.current.slice(0, resultCount);
+    if (activeIndex >= resultCount) setActiveIndex(resultCount - 1);
+  }, [activeIndex, resultCount]);
+
   if (!open) return null;
+
+  function onSearchKeyDown(event: ReactKeyboardEvent<HTMLInputElement>) {
+    if (event.key === "ArrowDown") {
+      event.preventDefault();
+      focusResult(activeIndex + 1);
+    } else if (event.key === "ArrowUp") {
+      event.preventDefault();
+      focusResult(activeIndex <= 0 ? resultCount - 1 : activeIndex - 1);
+    } else if (event.key === "Enter" && resultCount > 0) {
+      event.preventDefault();
+      activateResult(activeIndex >= 0 ? activeIndex : 0);
+    }
+  }
+
+  function onResultKeyDown(event: ReactKeyboardEvent<HTMLButtonElement>, index: number) {
+    if (event.key === "ArrowDown") {
+      event.preventDefault();
+      focusResult(index + 1);
+    } else if (event.key === "ArrowUp") {
+      event.preventDefault();
+      focusResult(index - 1);
+    } else if (event.key === "Enter") {
+      event.preventDefault();
+      activateResult(index);
+    } else if (event.key === "Tab") {
+      setActiveIndex(-1);
+    }
+  }
 
   return (
     <div className="fixed inset-0 z-50 bg-black/50 p-4 backdrop-blur-sm" onMouseDown={() => onOpenChange(false)} role="presentation">
@@ -81,6 +148,7 @@ export function CommandPalette({
             ref={inputRef}
             value={query}
             onChange={(event) => setQuery(event.target.value)}
+            onKeyDown={onSearchKeyDown}
             aria-label="Search commands"
             placeholder="Search workspace, records, and commands"
             className="min-w-0 bg-transparent text-sm outline-none placeholder:text-muted-foreground"
@@ -98,11 +166,15 @@ export function CommandPalette({
           {workspaceResults.length > 0 && (
             <div className="mb-2">
               <p className="px-3 py-1 text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Workspace</p>
-              {workspaceResults.map((result) => (
+              {workspaceResults.map((result, index) => (
                 <button
                   key={`${result.type}:${result.id}`}
+                  ref={(node) => {
+                    resultRefs.current[index] = node;
+                  }}
                   type="button"
                   className="grid w-full gap-1 rounded-lg px-3 py-2 text-left transition-colors hover:bg-surface-interactive focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                  onKeyDown={(event) => onResultKeyDown(event, index)}
                   onClick={() => {
                     navigate(result.href);
                     onOpenChange(false);
@@ -117,11 +189,15 @@ export function CommandPalette({
             </div>
           )}
           <p className="px-3 py-1 text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Commands</p>
-          {results.map((command) => (
+          {results.map((command, index) => (
             <button
               key={command.id}
+              ref={(node) => {
+                resultRefs.current[workspaceResults.length + index] = node;
+              }}
               type="button"
               className="grid w-full gap-1 rounded-lg px-3 py-2 text-left transition-colors hover:bg-surface-interactive focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+              onKeyDown={(event) => onResultKeyDown(event, workspaceResults.length + index)}
               onClick={() => {
                 void command.run();
                 onOpenChange(false);

@@ -90,8 +90,56 @@ export default function Leads() {
       ) : filtered?.length === 0 ? (
         <EmptyState icon={Users} title="No leads yet" description="Leads captured by your website chat will show up here." />
       ) : (
-        <Card className="overflow-x-auto">
-          <table className="w-full text-sm">
+        <>
+          <div className="grid gap-3 md:hidden">
+            {filtered?.map((lead) => (
+              <Card key={lead.id} className="space-y-4 p-4">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <h2 className="truncate text-sm font-semibold">{lead.name || lead.email || lead.phone || "Unnamed lead"}</h2>
+                    <p className="mt-1 truncate text-xs text-muted-foreground">{lead.email || lead.phone || "No contact info"}</p>
+                  </div>
+                  <Badge tone={STATUS_TONE[lead.status]} className="shrink-0">
+                    {lead.status}
+                  </Badge>
+                </div>
+                <p className="line-clamp-3 text-sm text-muted-foreground">{lead.message || "No message recorded."}</p>
+                <div className="grid grid-cols-2 gap-3 text-xs">
+                  <div>
+                    <p className="font-medium text-muted-foreground">Source</p>
+                    <Badge className="mt-1">{lead.source === "website_chat" ? "Website chat" : "Manual"}</Badge>
+                  </div>
+                  <div>
+                    <p className="font-medium text-muted-foreground">Conversation</p>
+                    {lead.conversationId ? (
+                      <Link to="/app/inbox" className="mt-1 inline-flex font-medium text-primary underline">
+                        Open inbox
+                      </Link>
+                    ) : (
+                      <p className="mt-1 text-muted-foreground">No conversation</p>
+                    )}
+                  </div>
+                </div>
+                <label className="block text-xs font-medium text-muted-foreground">
+                  Status
+                  <select
+                    value={lead.status}
+                    onChange={(e) => void updateStatus(lead.id, e.target.value as LeadStatus)}
+                    className="mt-1 w-full rounded-md border border-border bg-background px-2 py-2 text-sm text-foreground"
+                  >
+                    {LEAD_STATUSES.map((s) => (
+                      <option key={s} value={s}>
+                        {s}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              </Card>
+            ))}
+          </div>
+
+          <Card className="hidden overflow-x-auto md:block">
+            <table className="w-full text-sm">
             <thead className="border-b border-border text-left text-muted-foreground">
               <tr>
                 <th className="p-3 font-medium">Name / contact</th>
@@ -140,8 +188,9 @@ export default function Leads() {
                 </tr>
               ))}
             </tbody>
-          </table>
-        </Card>
+            </table>
+          </Card>
+        </>
       )}
     </div>
   );
