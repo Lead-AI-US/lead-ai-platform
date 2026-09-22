@@ -53,13 +53,23 @@ export async function recordEvent(params: {
       id: ref.id,
       workspaceId: params.workspaceId,
       type: params.type,
-      customerId: params.customerId,
-      leadId: params.leadId,
-      conversationId: params.conversationId,
-      agentActionId: params.agentActionId,
-      sourceEventId: params.sourceEventId,
-      automationRunId: params.automationRunId,
-      actor: params.actor,
+      // Firestore rejects `undefined` field values outright, and almost
+      // every caller (api/chat.ts especially) only ever has a subset of
+      // these linking IDs for a given event — each must be omitted
+      // entirely rather than set to undefined, or this write throws and is
+      // silently swallowed by the catch below on every single call site
+      // that doesn't pass all of them.
+      ...(params.customerId ? { customerId: params.customerId } : {}),
+      ...(params.leadId ? { leadId: params.leadId } : {}),
+      ...(params.conversationId ? { conversationId: params.conversationId } : {}),
+      ...(params.agentActionId ? { agentActionId: params.agentActionId } : {}),
+      ...(params.sourceEventId ? { sourceEventId: params.sourceEventId } : {}),
+      ...(params.automationRunId ? { automationRunId: params.automationRunId } : {}),
+      // Firestore's undefined check is recursive, so a caller passing
+      // { type: "customer", id: possiblyUndefinedCustomerId } (api/chat.ts
+      // does, whenever a customer record couldn't be resolved) needs the
+      // same guard applied one level down.
+      actor: params.actor.id ? params.actor : { type: params.actor.type },
       source: params.source ?? {},
       metadata: sanitizeEventMetadata(params.metadata),
       occurredAt: params.occurredAt ?? new Date().toISOString(),

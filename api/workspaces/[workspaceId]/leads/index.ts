@@ -56,12 +56,15 @@ async function handleCreate(req: VercelRequest, res: VercelResponse, workspaceId
       id: ref.id,
       workspaceId,
       source: input.source,
-      customerId: input.customerId,
-      name: input.name,
-      email: input.email,
-      phone: input.phone,
-      message: input.message,
-      conversationId: input.conversationId,
+      // Every one of these is optional in CreateLeadSchema — Firestore
+      // rejects `undefined` field values outright, so each must be
+      // omitted entirely rather than set to undefined.
+      ...(input.customerId ? { customerId: input.customerId } : {}),
+      ...(input.name ? { name: input.name } : {}),
+      ...(input.email ? { email: input.email } : {}),
+      ...(input.phone ? { phone: input.phone } : {}),
+      ...(input.message ? { message: input.message } : {}),
+      ...(input.conversationId ? { conversationId: input.conversationId } : {}),
       status: "new",
       stage: "new",
       createdAt: now,

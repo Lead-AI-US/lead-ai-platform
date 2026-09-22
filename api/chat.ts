@@ -5,6 +5,7 @@ import { ChatMessageInputSchema } from "../src/lib/validation/chat.js";
 import { isOriginAllowed } from "../src/lib/http/originPolicy.js";
 import { checkRateLimit } from "../src/lib/http/rateLimit.js";
 import { orchestrateAssistantResponse } from "../src/lib/ai/orchestrator.js";
+import { resolveTestModelOverride } from "../src/lib/ai/testModelAdapter.js";
 import { trackEvent } from "../src/lib/analytics/track.js";
 import { upsertWebsiteCustomer } from "../src/server/customers/customerService.js";
 import { recordEvent } from "../src/server/events/eventService.js";
@@ -107,6 +108,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       businessName: workspace.name,
       approvedKnowledge,
       userMessage: input.message,
+      // undefined in every real deployment — see testModelAdapter.ts's
+      // safety gate. Only ever set locally for the pilot-journey e2e test.
+      callModel: resolveTestModelOverride(approvedKnowledge),
     });
     const durationMs = Date.now() - start;
     const customer = await upsertWebsiteCustomer({
@@ -137,10 +141,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         id: leadRef.id,
         workspaceId: workspace.id,
         source: "website_chat",
-        customerId,
-        name: result.decision.collectedFields?.name,
-        email: result.decision.collectedFields?.email,
-        phone: result.decision.collectedFields?.phone,
+        // Firestore rejects `undefined` field values outright — a visitor
+        // may be recognized without a linked customer doc, and the model
+        // may propose a lead without every contact field collected yet, so
+        // each optional field must be omitted entirely, not set to
+        // undefined.
+        ...(customerId ? { customerId } : {}),
+        ...(result.decision.collectedFields?.name ? { name: result.decision.collectedFields.name } : {}),
+        ...(result.decision.collectedFields?.email ? { email: result.decision.collectedFields.email } : {}),
+        ...(result.decision.collectedFields?.phone ? { phone: result.decision.collectedFields.phone } : {}),
         message: input.message,
         status: "new",
         stage: "new",
@@ -148,7 +157,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         intent: result.decision.intent,
         qualification: {
           confidence: result.decision.confidence,
-          reasons: result.decision.reason ? [result.decision.reason] : undefined,
+          ...(result.decision.reason ? { reasons: [result.decision.reason] } : {}),
         },
         createdAt: now,
         updatedAt: now,

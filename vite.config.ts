@@ -6,6 +6,15 @@ export default defineConfig({
   server: {
     host: "::",
     port: 5173,
+    // Dev-server-only proxy to scripts/local-api-server.mts — this option
+    // has no effect on `vite build` output, only `vite dev`. See
+    // docs/LOCAL_DEVELOPMENT.md for the full local pilot-journey setup.
+    proxy: {
+      "/api": {
+        target: `http://127.0.0.1:${process.env.LOCAL_API_PORT ?? 3001}`,
+        changeOrigin: true,
+      },
+    },
   },
   plugins: [react()],
   build: {

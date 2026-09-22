@@ -9,8 +9,8 @@
  * client bundle — it uses a private service account key.
  */
 import { initializeApp, getApps, type FirebaseOptions } from "firebase/app";
-import { getAuth } from "firebase/auth";
-import { getFirestore } from "firebase/firestore";
+import { connectAuthEmulator, getAuth } from "firebase/auth";
+import { connectFirestoreEmulator, getFirestore } from "firebase/firestore";
 
 function readClientConfig(): FirebaseOptions | null {
   const apiKey = import.meta.env.VITE_FIREBASE_API_KEY;
@@ -38,3 +38,22 @@ const app = config
 
 export const auth = app ? getAuth(app) : null;
 export const db = app ? getFirestore(app) : null;
+
+// Emulator wiring — LOCAL DEV / TEST ONLY. Gated on import.meta.env.DEV
+// (false in every production/preview build, since those are `vite build`
+// output, not `vite dev`) so this cannot activate in a deployed environment
+// even if VITE_USE_FIREBASE_EMULATOR were mistakenly left set. See
+// docs/LOCAL_DEVELOPMENT.md for the full emulator + pilot-journey-test setup.
+let emulatorsConnected = false;
+if (
+  import.meta.env.DEV &&
+  import.meta.env.VITE_USE_FIREBASE_EMULATOR === "true" &&
+  auth &&
+  db &&
+  !emulatorsConnected
+) {
+  connectAuthEmulator(auth, "http://127.0.0.1:9099", { disableWarnings: true });
+  connectFirestoreEmulator(db, "127.0.0.1", 8080);
+  emulatorsConnected = true;
+  console.warn("[firebase/client] Connected to local Auth + Firestore emulators (dev-only).");
+}

@@ -42,7 +42,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       timezone: input.timezone,
       businessType: input.businessType,
       primaryGoal: input.primaryGoal,
-      websiteDomain: input.websiteDomain,
+      // websiteDomain is optional (a new business may not have a site yet).
+      // Firestore rejects `undefined` field values outright, so it must be
+      // omitted entirely rather than set to undefined.
+      ...(input.websiteDomain ? { websiteDomain: input.websiteDomain } : {}),
       publicWidgetKey: generatePublicWidgetKey(),
       allowedOrigins: [],
       createdAt: now,
