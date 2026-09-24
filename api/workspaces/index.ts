@@ -64,6 +64,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const member: WorkspaceMember = {
       workspaceId: workspaceRef.id,
       userId: user.uid,
+      ...(user.email ? { email: user.email } : {}),
       role: "owner",
       status: "active",
       createdAt: now,

@@ -5,7 +5,8 @@ document's bug-by-bug narrative (7 fixed Firestore-undefined bugs, the
 full emulator/e2e harness design) is not repeated here. This pass
 re-verified all three repos' local state was exactly as that document
 and the marketing/audit repos' own histories claimed (nothing had
-drifted), then closed three of its four explicitly deferred findings.
+drifted), then closed all four of its explicitly deferred findings and
+one more (analytics event tracking) found along the way.
 
 ## Repo / branch / commit status (re-verified, not assumed)
 
@@ -66,19 +67,50 @@ not inferred from a code read alone.
    separate direct call proved the mechanism itself blocks once
    exceeded (limit=5 allowed exactly 5 calls, blocked the 6th).
    `git log -1 f63670f`.
+4. **Team invites and role/status changes** (`docs/AUTHORIZATION.md`'s
+   "known gaps": no route added members or changed roles — the owner
+   membership created at onboarding was the only one that could ever
+   exist). Net-new: `GET /members`, `PATCH /members/:userId`,
+   `GET`/`POST /invites`, `DELETE /invites/:inviteId`,
+   `POST /invites/:inviteId/accept`, a `src/server/members/memberPolicy.ts`
+   authorization layer (unit-tested, 9/9) enforcing "admin manages
+   member/viewer only, owner manages anyone" and "never remove the last
+   active owner," new Firestore composite indexes and a
+   server-only `invites` rules match, and a Team panel in Settings plus
+   a standalone `/accept-invite` page. No live email provider exists in
+   this environment, so invites generate a copyable link instead of
+   silently claiming to have sent an email. Verified against the real
+   emulator stack with a dedicated `e2e/teamInvite.spec.ts` (5/5): an
+   owner invites a teammate, copies the real link, a brand-new account
+   accepts it and lands in the same workspace with the invited role, the
+   owner changes that role, and — the one case worth calling out
+   specifically — attempting to demote the workspace's only owner is
+   actually rejected by the server (409), re-verified after a page
+   reload that the role didn't change.
+
+Along the way, found and fixed a fifth instance of the same
+undefined-field-into-Firestore bug this whole baseline has been chasing,
+in `src/lib/analytics/track.ts` — sibling code to the `eventService.ts`
+root-cause fix from the prior pass, but never itself touched. Every
+visitor-triggered call in `api/chat.ts` (`lead_created`,
+`conversation_started`, `assistant_response_generated/failed`,
+`handoff_requested` — the app's single hottest code path) omits
+`actorId`, which was being set unconditionally; against a real
+Firestore this event write would have thrown and been silently
+swallowed by the function's own fail-safe `catch`. Same
+conditional-spread fix as the other four.
 
 `npm run typecheck`, `npm run lint` (2 pre-existing warnings, 0 errors),
-`npm test` (123/123), and `npm run build` all re-run clean after every
-fix in this pass.
+`npm test` (132/132, up from 123 — 9 new `memberPolicy` tests),
+`npm run test:rules` (15/15, up from 13), and `npm run build` all
+re-run clean after every fix in this pass.
 
 ## Still open, not attempted this pass
 
-- **No team-invite/role-change routes** (`docs/AUTHORIZATION.md`'s own
-  "known gaps") — a net-new feature (API routes, Firestore writes, an
-  invite-acceptance flow, likely a UI panel), not a bug fix, so
-  deliberately not started without a direction check.
 - `actionService.ts`'s `targetExistsForProposal`/policy layer itself was
   not re-audited beyond the field-shape fix.
+- No self-service "leave workspace" route for a member to remove
+  themselves (only an admin/owner disabling them).
 - Live OpenAI model behavior and a live Firebase project are both still
   genuinely unverified (no credentials in this environment).
 - The marketing → platform funnel still links nowhere real, because the

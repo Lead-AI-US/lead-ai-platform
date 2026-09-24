@@ -39,7 +39,35 @@ Higher roles satisfy lower minimums.
 | `POST /api/workspaces/:id/knowledge` | workspace user | Firebase ID token | path param, server-checked | admin |
 | `PATCH /api/workspaces/:id/knowledge/:id` | workspace user | Firebase ID token | path param, server-checked | admin |
 | `GET /api/workspaces/:id/analytics/summary` | workspace user | Firebase ID token | path param, server-checked | viewer |
+| `GET /api/workspaces/:id/members` | workspace user | Firebase ID token | path param, server-checked | viewer |
+| `PATCH /api/workspaces/:id/members/:userId` | workspace user | Firebase ID token | path param, server-checked | admin — and see below |
+| `GET`/`POST /api/workspaces/:id/invites` | workspace user | Firebase ID token | path param, server-checked | admin — owner-only to invite as `owner` |
+| `DELETE /api/workspaces/:id/invites/:inviteId` | workspace user | Firebase ID token | path param, server-checked | admin — owner-only to revoke an `owner` invite |
+| `POST /api/workspaces/:id/invites/:inviteId/accept` | the invited user | Firebase ID token | none required — this is how they become one | n/a — the invite's own email match is the check, see below |
 | `POST /api/chat` | website visitor | none (public) — scoped by `publicWidgetKey` (locator, not secret) + `Origin` allowlist + rate limit | resolved from `publicWidgetKey`, not client-asserted | channel policy, not a role |
+
+### Team membership rules (beyond the plain role ladder)
+
+- **Admin can manage `member`/`viewer` only.** Changing anything about an
+  `owner` or `admin` membership (role, status) — or inviting/promoting
+  *to* `owner` or `admin` — requires the caller to already be an `owner`.
+  Enforced in `src/server/members/memberPolicy.ts::canManageMemberRole`
+  (unit-tested), independent of the route's own `admin`-minimum gate.
+- **A workspace can never end up with zero active owners.** Demoting or
+  disabling the last active owner is rejected with `409 last_owner`
+  (`memberPolicy.ts::wouldRemoveLastOwner`), even by that owner acting on
+  themselves.
+- **Accepting an invite is authorized by e-mail match, not membership** —
+  `POST .../invites/:inviteId/accept` intentionally does *not* call
+  `requireWorkspaceRole`/`requireWorkspaceMembership` (the caller isn't a
+  member yet); it instead requires the signed-in Firebase user's own
+  verified email to match the invite's `email` field exactly, and the
+  invite to be `pending` and unexpired.
+- **Invite tokens are the Firestore document id itself** — server-only
+  (`workspaces/:id/invites/:inviteId`, `allow read, write: if false` in
+  `firebase/firestore.rules`), unguessable, and never sent to anyone but
+  the admin who created it, who is responsible for sharing the link (see
+  below — no live email provider is configured in this environment).
 
 There is no Vercel Cron / `CRON_SECRET`-authenticated route in this MVP (no
 scheduler exists yet — see `docs/MVP_VERIFICATION.md`), so that authorization
@@ -57,8 +85,10 @@ logging and analytics tracking. See `docs/SECURITY.md`.
 
 ## Known gaps (honest, not silently deferred)
 
-- **No route adds additional members to a workspace yet.** Only the owner
-  membership created at onboarding exists. Inviting teammates is NOT
-  IMPLEMENTED.
-- **No route changes a member's role or disables a membership.** NOT
-  IMPLEMENTED.
+- **No email is actually sent for an invite.** No email provider is
+  configured in this environment (see `docs/LOCAL_DEVELOPMENT.md`); the
+  admin who creates an invite must copy the generated link from the Team
+  settings UI and share it themselves. This is surfaced honestly in that
+  UI, not presented as an automated email.
+- **No self-service "leave workspace."** A member can currently only be
+  disabled by an admin/owner, not remove themselves.

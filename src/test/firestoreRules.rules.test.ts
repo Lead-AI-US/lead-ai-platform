@@ -180,6 +180,16 @@ beforeEach(async () => {
       startedAt: now,
       completedAt: now,
     });
+    await setDoc(doc(db, "workspaces", WORKSPACE_A, "invites", "invite_a1"), {
+      id: "invite_a1",
+      workspaceId: WORKSPACE_A,
+      email: "invitee@example.com",
+      role: "member",
+      status: "pending",
+      invitedBy: USER_A,
+      createdAt: now,
+      expiresAt: now,
+    });
   });
 });
 
@@ -293,5 +303,23 @@ describe("Firestore rules — tenant isolation (release blocker)", () => {
     });
     const db = testEnv.authenticatedContext(USER_A).firestore();
     await assertFails(getDoc(doc(db, "users", USER_B)));
+  });
+
+  it("Client CANNOT read an invite, even for their own workspace (server-only, unguessable id)", async () => {
+    const db = testEnv.authenticatedContext(USER_A).firestore();
+    await assertFails(getDoc(doc(db, "workspaces", WORKSPACE_A, "invites", "invite_a1")));
+  });
+
+  it("Client CANNOT write an invite directly", async () => {
+    const db = testEnv.authenticatedContext(USER_A).firestore();
+    await assertFails(
+      setDoc(doc(db, "workspaces", WORKSPACE_A, "invites", "invite_a2"), {
+        id: "invite_a2",
+        workspaceId: WORKSPACE_A,
+        email: "attacker@example.com",
+        role: "owner",
+        status: "pending",
+      })
+    );
   });
 });

@@ -30,6 +30,8 @@ export type WorkspaceMemberStatus = "active" | "disabled";
 export interface WorkspaceMember {
   workspaceId: string;
   userId: string;
+  /** Denormalized at membership creation (onboarding or invite acceptance) for display — never authoritative for auth. */
+  email?: string;
   role: WorkspaceRole;
   status: WorkspaceMemberStatus;
   createdAt: IsoTimestamp;

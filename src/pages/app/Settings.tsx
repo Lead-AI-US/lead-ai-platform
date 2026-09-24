@@ -1,4 +1,5 @@
 import { useState, type FormEvent } from "react";
+import { useAuth } from "@/lib/auth/AuthProvider";
 import { useWorkspace } from "@/lib/workspace/WorkspaceProvider";
 import { apiPatch } from "@/lib/api/client";
 import { PageHeader } from "@/app/PageHeader";
@@ -6,11 +7,13 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Badge } from "@/components/ui/Badge";
+import { TeamCard } from "@/components/app/TeamCard";
 import { roleAtLeast } from "@/types/workspace";
 import { widgetSnippet } from "@/lib/workspace/widgetSnippet";
 
 export default function Settings() {
   const { workspace, role, refresh } = useWorkspace();
+  const { user } = useAuth();
   const [newOrigin, setNewOrigin] = useState("");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -98,6 +101,8 @@ export default function Settings() {
           </pre>
         </CardContent>
       </Card>
+
+      {role && user && <TeamCard workspaceId={workspace.id} ownRole={role} ownUid={user.uid} />}
 
       <Card>
         <CardHeader>

@@ -106,6 +106,14 @@ service cloud.firestore {
       match /rateLimits/{key} {
         allow read, write: if false;
       }
+
+      // Invite tokens are the doc id itself (see docs/AUTHORIZATION.md) --
+      // never client-readable/writable. Creation, listing, revocation and
+      // acceptance all go through the authenticated API (Admin SDK, which
+      // bypasses these rules), same as auditLogs/analyticsEvents above.
+      match /invites/{inviteId} {
+        allow read, write: if false;
+      }
     }
 
     // Deny everything else by default.
