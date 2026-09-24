@@ -10,30 +10,23 @@ release-level summary across all three.
 
 | Repo | Branch | Commits ahead of `origin/main` | Pushed? |
 |---|---|---|---|
-| `Arungharami/leadai.us` (marketing) | `feat/pilot-funnel-release` | 8 | **Partial — see blocker below** |
+| `Arungharami/leadai.us` (marketing) | `feat/pilot-funnel-release` | 8 | Yes |
 | `Lead-AI-US/lead-ai-business-audit` | `fix/admin-auth-and-firestore-rules` | 2 | Yes |
-| `Lead-AI-US/lead-ai-platform` | `feat/p0-real-pilot-core-loop` | 10 | Yes |
+| `Lead-AI-US/lead-ai-platform` | `feat/p0-real-pilot-core-loop` | 11 | Yes |
 
-**Marketing repo push blocker**: the account's GitHub email-privacy
-setting required rewriting this branch's commit author emails to the
-account's noreply address (plumbing-only: `commit-tree` + `update-ref`,
-verified tree-identical to the originals before moving the branch ref —
-never touched with `filter-branch`/interactive `rebase`). That rewrite
-changed every commit's hash, so landing it requires a force-push of a
-branch that was already on GitHub with an open draft PR. Authorized and
-attempted repeatedly; every attempt has failed or hung with `HTTP 408`
-on the actual data transfer (confirmed via `GIT_CURL_VERBOSE=1` — auth
-and the initial handshake succeed every time, the pack upload itself
-times out), including after clearing orphaned retry processes,
-increasing `http.postBuffer`, and forcing HTTP/1.1. This looks like a
-transient network condition between this environment and GitHub for
-this specific large multi-commit transfer, not an auth or permissions
-problem (the other two repos, and this same repo's earlier smaller
-pushes, all succeeded normally). **The hero-redesign and 320px-adjacent
-commit (`0439315`) is verified, tested, and committed locally, but not
-yet on GitHub as of this report** — retry `git push --force-with-lease`
-from `leadai.us-1` when this is read; if it keeps failing, the fallback
-is pushing over SSH instead of HTTPS, or from a different network.
+All three verified `local HEAD == origin HEAD` for their branch as of
+this report. The marketing push needed several retries: the account's
+GitHub email-privacy setting required rewriting this branch's commit
+author emails to the account's noreply address (plumbing-only:
+`commit-tree` + `update-ref`, verified tree-identical to the originals
+before moving the branch ref — never touched with
+`filter-branch`/interactive `rebase`), which changed every commit's
+hash and required a force-push (authorized) of a branch with an open
+draft PR. The actual data transfer then hit `HTTP 408` repeatedly
+(confirmed via `GIT_CURL_VERBOSE=1` that auth and handshake succeeded
+every time, only the pack upload itself timed out) before eventually
+succeeding — a transient network condition for this large multi-commit
+transfer, not an auth or permissions problem.
 
 ## 2. Draft PRs (none merged, none auto-merged)
 
@@ -149,27 +142,25 @@ in this pass or prior passes. See §9 for exactly what's blocking that.
 
 ## 9. Required owner-controlled setup
 
-1. **Push the marketing branch** — see §1's blocker; retry
-   `git push --force-with-lease` from a normal network, or push over SSH.
-2. **A real Firebase project** (Authentication + Firestore) for the
+1. **A real Firebase project** (Authentication + Firestore) for the
    platform, with `firebase/firestore.rules` and
    `firebase/firestore.indexes.json` actually deployed.
-3. **A real Firebase project** for the business-audit app, with its own
+2. **A real Firebase project** for the business-audit app, with its own
    `firestore.rules` deployed and a real admin account created —
    required *before* ever setting `VITE_FIREBASE_*` in that app's
    production environment (doing so first would reopen the exact PII
    exposure PR #21 closes).
-4. **A real `OPENAI_API_KEY`** to verify live model behavior.
-5. **Confirmed Vercel project ownership** under the intended team —
+3. **A real `OPENAI_API_KEY`** to verify live model behavior.
+4. **Confirmed Vercel project ownership** under the intended team —
    `aruns-projects-0839d12f` was not visible to this session's connector;
    only `aruns-projects-ba93fc58` was, and no `lead-ai-platform` project
    exists there yet.
-6. **A Google Cloud reCAPTCHA v3 site key** for App Check on the audit
+5. **A Google Cloud reCAPTCHA v3 site key** for App Check on the audit
    intake form.
-7. **Review and merge (or request changes on) the three draft PRs.**
-8. **Approve or replace the draft pricing** in `COMMERCIAL_LAUNCH_PLAN.md`
+6. **Review and merge (or request changes on) the three draft PRs.**
+7. **Approve or replace the draft pricing** in `COMMERCIAL_LAUNCH_PLAN.md`
    before it's ever quoted to a prospect.
-9. **A written pilot agreement/terms** — legal, not engineering, out of
+8. **A written pilot agreement/terms** — legal, not engineering, out of
    scope for this pass.
 
 ## 10. First-customer launch readiness
