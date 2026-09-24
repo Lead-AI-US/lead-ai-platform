@@ -2,6 +2,7 @@ import type { VercelRequest, VercelResponse } from "@vercel/node";
 import { getAdminDb } from "../../../../src/lib/firebase/admin.js";
 import { requireWorkspaceRole } from "../../../../src/lib/auth/serverAuth.js";
 import { getPathParam, parseBody, safeServerError } from "../../../../src/lib/http/apiHelpers.js";
+import { checkRateLimit } from "../../../../src/lib/http/rateLimit.js";
 import { CreateKnowledgeSchema } from "../../../../src/lib/validation/knowledge.js";
 import type { KnowledgeSource } from "../../../../src/types/knowledge.js";
 
@@ -19,6 +20,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 async function handleList(req: VercelRequest, res: VercelResponse, workspaceId: string) {
   const ctx = await requireWorkspaceRole(req, res, workspaceId, "viewer");
   if (!ctx) return;
+
+  const rateLimit = await checkRateLimit(workspaceId, `${workspaceId}:knowledge-list:${ctx.uid}`, 60);
+  if (!rateLimit.allowed) return res.status(429).json({ error: "rate_limited" });
 
   const db = getAdminDb();
   if (!db) return res.status(503).json({ error: "database_not_configured" });
@@ -41,6 +45,9 @@ async function handleCreate(req: VercelRequest, res: VercelResponse, workspaceId
   // Adding knowledge is an admin action - it becomes what the AI says on behalf of the business.
   const ctx = await requireWorkspaceRole(req, res, workspaceId, "admin");
   if (!ctx) return;
+
+  const rateLimit = await checkRateLimit(workspaceId, `${workspaceId}:knowledge-create:${ctx.uid}`, 30);
+  if (!rateLimit.allowed) return res.status(429).json({ error: "rate_limited" });
 
   const input = parseBody(req, res, CreateKnowledgeSchema);
   if (!input) return;
