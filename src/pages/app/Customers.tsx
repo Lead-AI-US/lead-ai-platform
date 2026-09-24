@@ -56,10 +56,10 @@ export default function Customers() {
         <>
           {/* Below sm: stacked cards instead of a 4-column table, so
               nothing clips or requires horizontal scrolling at 390px. */}
-          <div className="grid gap-3 sm:hidden">
+          <div className="grid min-w-0 gap-3 sm:hidden" data-testid="customers-mobile-list">
             {filtered?.map((customer) => (
-              <Card key={customer.id} className="p-3">
-                <Link to={`/app/customers/${customer.id}`} className="font-medium text-primary underline">
+              <Card key={customer.id} className="min-w-0 p-3">
+                <Link to={`/app/customers/${customer.id}`} className="break-words font-medium text-primary underline">
                   {customer.displayName || customer.email || customer.phone || `Customer ${customer.id.slice(-6)}`}
                 </Link>
                 <div className="text-xs text-muted-foreground">{customer.preferredChannel ?? "website"}</div>

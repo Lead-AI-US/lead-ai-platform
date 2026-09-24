@@ -94,17 +94,17 @@ export default function Leads() {
           {/* Below sm: a table clips or forces horizontal scroll on a
               5-column row at 390px, so leads render as stacked cards
               instead -- no scrolling needed to read a lead's status. */}
-          <div className="grid gap-3 sm:hidden">
+          <div className="grid min-w-0 gap-3 sm:hidden" data-testid="leads-mobile-list">
             {filtered?.map((lead) => (
-              <Card key={lead.id} className="p-3">
+              <Card key={lead.id} className="min-w-0 p-3">
                 <div className="flex items-start justify-between gap-3">
-                  <div>
+                  <div className="min-w-0">
                     <div className="font-medium">{lead.name || "—"}</div>
-                    <div className="text-xs text-muted-foreground">{lead.email || lead.phone || "no contact info"}</div>
+                    <div className="break-words text-xs text-muted-foreground">{lead.email || lead.phone || "no contact info"}</div>
                   </div>
-                  <Badge tone={STATUS_TONE[lead.status]}>{lead.status}</Badge>
+                  <Badge tone={STATUS_TONE[lead.status]} className="shrink-0">{lead.status}</Badge>
                 </div>
-                {lead.message && <p className="mt-2 text-sm text-muted-foreground">{lead.message}</p>}
+                {lead.message && <p className="mt-2 break-words text-sm text-muted-foreground">{lead.message}</p>}
                 <div className="mt-3 flex flex-wrap items-center gap-2">
                   <Badge>{lead.source === "website_chat" ? "Website chat" : "Manual"}</Badge>
                   {lead.conversationId ? (

@@ -130,6 +130,39 @@ test.describe.serial("Pilot journey — signup to captured lead", () => {
 
     await page.setViewportSize({ width: 390, height: 844 });
     await page.screenshot({ path: "artifacts/pilot-journey/owner-leads-inbox-mobile.png", fullPage: true });
+
+    // 320px -- the narrowest viewport a real device ships with (iPhone
+    // SE 1st gen/5). Below `sm` the table becomes stacked cards
+    // (Leads.tsx), so this isn't just a screenshot: actually reaching
+    // and using the status control at this width is what "lead details
+    // and status actions remain accessible" means.
+    //
+    // document.scrollWidth <= clientWidth is NOT sufficient here: `main`
+    // (AppLayout.tsx) sets overflow-y-auto, which per the CSS overflow
+    // spec forces its computed overflow-x to `auto` too (a `visible`
+    // axis paired with a non-visible one is promoted) -- so `main`
+    // becomes its own horizontal scroll container and silently clips a
+    // too-wide child instead of growing the document. This genuinely
+    // happened here (a card was 334px wide clipped inside a 320px
+    // viewport, invisible to a document-level width check) until the
+    // grid/Card containers got `min-w-0` -- so the real assertion has to
+    // check the rendered element's own bounding box, not just the page.
+    await page.setViewportSize({ width: 320, height: 700 });
+    const mobileList = page.getByTestId("leads-mobile-list");
+    await expect(mobileList).toBeVisible();
+    await expect(mobileList.getByText(visitorName).first()).toBeVisible();
+    await expect(mobileList.getByText(visitorEmail).first()).toBeVisible();
+    const mobileStatusSelect = mobileList.getByLabel(`Status for ${visitorName}`);
+    await expect(mobileStatusSelect).toBeVisible();
+    await mobileStatusSelect.selectOption("qualified");
+    await expect(mobileStatusSelect).toHaveValue("qualified");
+
+    const statusBadge = mobileList.getByText("qualified", { exact: true }).first();
+    const badgeBox = await statusBadge.boundingBox();
+    expect(badgeBox).not.toBeNull();
+    expect(badgeBox!.x + badgeBox!.width).toBeLessThanOrEqual(320);
+
+    await page.screenshot({ path: "artifacts/pilot-journey/owner-leads-inbox-320.png", fullPage: true });
   });
 
   test("6. Tenant isolation: a second, unrelated owner sees none of this", async ({ browser }) => {
