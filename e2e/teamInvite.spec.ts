@@ -113,6 +113,33 @@ test.describe.serial("Team invites", () => {
       "owner"
     );
   });
+
+  test("5. A member can leave voluntarily, with no admin/support step", async ({ page }) => {
+    // memberEmail is still "admin" from test 3, not the sole owner, so
+    // leaving should succeed outright.
+    await signIn(page, memberEmail, memberPassword);
+    await page.goto("/app/settings");
+
+    await page.getByRole("button", { name: "Leave workspace" }).click();
+    await page.getByRole("button", { name: "Confirm leave" }).click();
+
+    // No workspace left -> ProtectedRoute/onLeft sends them to onboarding.
+    await page.waitForURL(/\/onboarding$/);
+  });
+
+  test("6. The last active owner is blocked from leaving until ownership is transferred", async ({ page }) => {
+    await signIn(page, ownerEmail, ownerPassword);
+    await page.goto("/app/settings");
+
+    // Still the sole active owner (the member from test 5 only ever held
+    // "admin") -- leaving must be rejected with an actionable message.
+    await page.getByRole("button", { name: "Leave workspace" }).click();
+    await page.getByRole("button", { name: "Confirm leave" }).click();
+    await expect(
+      page.getByText("Transfer ownership to another member before leaving — a workspace must keep at least one active owner.")
+    ).toBeVisible();
+    await expect(page).toHaveURL(/\/app\/settings$/);
+  });
 });
 
 async function signIn(page: Page, email: string, password: string) {

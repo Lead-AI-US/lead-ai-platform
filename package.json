@@ -11,6 +11,7 @@
     "lint": "eslint .",
     "test": "vitest run",
     "test:rules": "vitest run --config vitest.rules.config.ts",
+    "test:integration": "vitest run --config vitest.integration.config.ts",
     "cli": "node cli/leadai.mjs"
   },
   "bin": {

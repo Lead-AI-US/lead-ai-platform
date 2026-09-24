@@ -44,6 +44,8 @@ Higher roles satisfy lower minimums.
 | `GET`/`POST /api/workspaces/:id/invites` | workspace user | Firebase ID token | path param, server-checked | admin — owner-only to invite as `owner` |
 | `DELETE /api/workspaces/:id/invites/:inviteId` | workspace user | Firebase ID token | path param, server-checked | admin — owner-only to revoke an `owner` invite |
 | `POST /api/workspaces/:id/invites/:inviteId/accept` | the invited user | Firebase ID token | none required — this is how they become one | n/a — the invite's own email match is the check, see below |
+| `POST /api/workspaces/:id/leave` | workspace user | Firebase ID token | path param, server-checked | viewer (any active member) — the last active owner is blocked, see below |
+| `POST /api/workspaces/:id/actions` | workspace user | Firebase ID token | path param, server-checked | role-dependent on action risk — see `actionPolicy.ts`; medium/high risk additionally require a verified `approvedBy`, see below |
 | `POST /api/chat` | website visitor | none (public) — scoped by `publicWidgetKey` (locator, not secret) + `Origin` allowlist + rate limit | resolved from `publicWidgetKey`, not client-asserted | channel policy, not a role |
 
 ### Team membership rules (beyond the plain role ladder)
@@ -68,6 +70,36 @@ Higher roles satisfy lower minimums.
   `firebase/firestore.rules`), unguessable, and never sent to anyone but
   the admin who created it, who is responsible for sharing the link (see
   below — no live email provider is configured in this environment).
+  Verified against the installed SDK, not assumed: Firestore auto-IDs
+  (`@google-cloud/firestore`'s `autoId()`, `build/src/util.js`) are built
+  from Node's `crypto.randomBytes` — a real CSPRNG, not `Math.random()` —
+  with rejection sampling against a 62-character alphabet at 20
+  characters (~119 bits of entropy). Not sequential, not guessable.
+- **Leaving a workspace and demoting/disabling a member share one
+  transactional code path** (`src/server/members/memberService.ts::applyMemberUpdate`)
+  so the last-owner guarantee can't drift between the two routes. A
+  read-check-write done as three separate Firestore calls has a real
+  race — two concurrent requests touching two *different* owners of a
+  2-owner workspace could each see "the other owner is still active"
+  and both commit, leaving zero owners — so the target-doc read, the
+  active-owner-count query, and the write are one Firestore transaction;
+  Firestore serializes any concurrent transaction touching the same
+  documents. Proven against the real emulator, not asserted: see
+  `memberService.integration.test.ts`'s `CONCURRENCY` test, which fires
+  two demotions at once with `Promise.all` and asserts exactly one
+  `ok` / one `last_owner` (never both, never neither).
+- **`agentActions` approval cannot be self-granted.** `approvedBy` on an
+  action proposal is a plain client-supplied field — treating
+  `approvedBy === (the proposer's own uid)` as "approved" (the previous
+  behavior) let any proposer approve their own medium/high-risk action
+  by simply naming themselves. `proposeAction`'s `verifyApproval` now
+  requires `approvedBy` to name a *different* user who is themselves an
+  active admin/owner of the workspace, verified against
+  `workspaceMembers` server-side. See
+  `actionService.integration.test.ts` for the real-emulator coverage
+  (self-approval, a valid other-admin approver, a same-workspace
+  non-admin approver, a nonexistent uid, and a disabled admin — all
+  against real Firestore writes).
 
 There is no Vercel Cron / `CRON_SECRET`-authenticated route in this MVP (no
 scheduler exists yet — see `docs/MVP_VERIFICATION.md`), so that authorization
@@ -90,5 +122,10 @@ logging and analytics tracking. See `docs/SECURITY.md`.
   admin who creates an invite must copy the generated link from the Team
   settings UI and share it themselves. This is surfaced honestly in that
   UI, not presented as an automated email.
-- **No self-service "leave workspace."** A member can currently only be
-  disabled by an admin/owner, not remove themselves.
+- **Duplicate-invite and already-a-member checks in `POST /invites` are
+  not themselves transactional** (unlike the member-update path above) —
+  two concurrent invite creations for the same email could both pass the
+  "no pending invite exists" read before either write lands, producing
+  two pending invites for one email. Low severity (worst case: two valid
+  links, the first accepted wins since acceptance itself *is*
+  transactional per-invite) but noted rather than silently assumed safe.

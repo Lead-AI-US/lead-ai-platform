@@ -1,3 +1,4 @@
+import type { Firestore } from "firebase-admin/firestore";
 import { getAdminDb } from "@/lib/firebase/admin.js";
 import { recordAuditEvent } from "@/lib/audit/log.js";
 import { recordEvent } from "@/server/events/eventService.js";
@@ -7,6 +8,7 @@ import { parseActionProposal, type ActionProposal } from "./actionSchema.js";
 import { evaluateActionPolicy, type ActionPolicyDecision } from "./actionPolicy.js";
 import { classifyActionRisk } from "./actionRisk.js";
 import { executeAction, type ActionExecutionResult } from "./actionExecutor.js";
+import { roleAtLeast, workspaceMemberDocId, type WorkspaceMember } from "@/types/workspace.js";
 
 export interface ProposeActionResult {
   action: AgentAction;
@@ -31,7 +33,7 @@ export async function proposeAction(params: {
   const risk = classifyActionRisk(proposal.type);
   const existingCompletedAction = await findCompletedActionByIdempotencyKey(proposal.workspaceId, proposal.idempotencyKey);
   const targetExists = await targetExistsForProposal(proposal);
-  const approvalGranted = proposal.approvedBy === params.auth.uid;
+  const approvalGranted = await verifyApproval(db, proposal.workspaceId, params.auth.uid, proposal.approvedBy);
   const policy = evaluateActionPolicy({
     proposal,
     actorRole: params.auth.role,
@@ -146,6 +148,27 @@ export async function proposeAction(params: {
   });
 
   return { action: { ...action, status: execution.ok ? "completed" : "failed", completedAt }, policy, execution };
+}
+
+/**
+ * `approvedBy` arrives as a plain client-supplied field on the proposal
+ * body, so it must never be trusted at face value — otherwise a proposer
+ * could self-approve a medium/high-risk action by simply setting
+ * `approvedBy` to their own uid in the same request. Approval only counts
+ * when it names a DIFFERENT user who is themselves an active admin/owner
+ * of this workspace, verified server-side against workspaceMembers.
+ */
+async function verifyApproval(
+  db: Firestore,
+  workspaceId: string,
+  proposerUid: string,
+  approvedBy: string | undefined
+): Promise<boolean> {
+  if (!approvedBy || approvedBy === proposerUid) return false;
+  const doc = await db.collection("workspaceMembers").doc(workspaceMemberDocId(workspaceId, approvedBy)).get();
+  if (!doc.exists) return false;
+  const approver = doc.data() as WorkspaceMember;
+  return approver.status === "active" && roleAtLeast(approver.role, "admin");
 }
 
 async function findCompletedActionByIdempotencyKey(workspaceId: string, idempotencyKey: string): Promise<AgentAction | null> {

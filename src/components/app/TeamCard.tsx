@@ -15,7 +15,18 @@ const ROLE_TONE: Record<WorkspaceRole, "neutral" | "info" | "success"> = {
   owner: "success",
 };
 
-export function TeamCard({ workspaceId, ownRole, ownUid }: { workspaceId: string; ownRole: WorkspaceRole; ownUid: string }) {
+export function TeamCard({
+  workspaceId,
+  ownRole,
+  ownUid,
+  onLeft,
+}: {
+  workspaceId: string;
+  ownRole: WorkspaceRole;
+  ownUid: string;
+  /** Called after a successful self-service leave — the caller decides where to send the user. */
+  onLeft: () => void;
+}) {
   const [members, setMembers] = useState<WorkspaceMember[] | null>(null);
   const [invites, setInvites] = useState<WorkspaceInvite[] | null>(null);
   const [inviteEmail, setInviteEmail] = useState("");
@@ -23,6 +34,8 @@ export function TeamCard({ workspaceId, ownRole, ownUid }: { workspaceId: string
   const [error, setError] = useState<string | null>(null);
   const [copiedInviteId, setCopiedInviteId] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [leaving, setLeaving] = useState(false);
+  const [confirmLeave, setConfirmLeave] = useState(false);
 
   const canManage = roleAtLeast(ownRole, "admin");
   const invitableRoles = ownRole === "owner" ? ROLE_OPTIONS : ROLE_OPTIONS.filter((r) => r !== "owner");
@@ -114,6 +127,24 @@ export function TeamCard({ workspaceId, ownRole, ownUid }: { workspaceId: string
     if (!canManage) return false;
     if (target.role === "owner" || target.role === "admin") return ownRole === "owner";
     return true;
+  }
+
+  async function leaveWorkspace() {
+    setError(null);
+    setLeaving(true);
+    try {
+      await apiPost(`/api/workspaces/${workspaceId}/leave`, {});
+      onLeft();
+    } catch (err) {
+      setError(
+        err instanceof Error && err.message === "last_owner"
+          ? "Transfer ownership to another member before leaving — a workspace must keep at least one active owner."
+          : "Couldn't leave this workspace."
+      );
+      setConfirmLeave(false);
+    } finally {
+      setLeaving(false);
+    }
   }
 
   return (
@@ -229,6 +260,24 @@ export function TeamCard({ workspaceId, ownRole, ownUid }: { workspaceId: string
             </form>
           </>
         )}
+
+        <div className="border-t border-border pt-4">
+          {confirmLeave ? (
+            <div className="flex flex-wrap items-center gap-2">
+              <p className="text-sm">Leave this workspace? You'll lose access immediately.</p>
+              <Button type="button" variant="destructive" disabled={leaving} onClick={() => void leaveWorkspace()} className="px-3 py-1 text-xs">
+                {leaving ? "Leaving…" : "Confirm leave"}
+              </Button>
+              <Button type="button" variant="secondary" disabled={leaving} onClick={() => setConfirmLeave(false)} className="px-3 py-1 text-xs">
+                Cancel
+              </Button>
+            </div>
+          ) : (
+            <Button type="button" variant="secondary" onClick={() => setConfirmLeave(true)} className="px-3 py-1 text-xs">
+              Leave workspace
+            </Button>
+          )}
+        </div>
       </CardContent>
     </Card>
   );

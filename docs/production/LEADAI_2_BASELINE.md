@@ -8,6 +8,25 @@ and the marketing/audit repos' own histories claimed (nothing had
 drifted), then closed all four of its explicitly deferred findings and
 one more (analytics event tracking) found along the way.
 
+**2026-09-24, P1 pass addendum** — draft PRs opened for all three
+branches ([marketing #10](https://github.com/Arungharami/leadai.us/pull/10),
+[audit #21](https://github.com/Lead-AI-US/lead-ai-business-audit/pull/21),
+[platform #16](https://github.com/Lead-AI-US/lead-ai-platform/pull/16));
+none merged. A security audit of the team-invite system (explicitly
+requested this pass) found and fixed two real issues beyond what the
+prior pass's tests covered — both are detailed in `docs/AUTHORIZATION.md`
+rather than repeated here: (1) the last-owner protection had a genuine,
+now closed and emulator-proven-fixed, concurrency race (two simultaneous
+demotions of different owners could both have succeeded); (2)
+`agentActions` approval could be self-granted by any proposer naming
+their own uid, now fixed to require a verified, different, active
+admin/owner. Self-service "leave workspace" is also new this pass
+(`POST /workspaces/:id/leave`), sharing the same transactional
+last-owner guard. A new `npm run test:integration` (real Firestore
+emulator, no mocks) now exists specifically for this class of
+authorization/concurrency property — 11/11 passing, plus 2 new e2e
+tests (13/13 total) and unchanged 15/15 rules + 132/132 unit.
+
 ## Repo / branch / commit status (re-verified, not assumed)
 
 | Repo | Branch | Ahead of origin/main | Pushed? | Open PR? |

@@ -1,4 +1,5 @@
 import { useState, type FormEvent } from "react";
+import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/lib/auth/AuthProvider";
 import { useWorkspace } from "@/lib/workspace/WorkspaceProvider";
 import { apiPatch } from "@/lib/api/client";
@@ -14,6 +15,7 @@ import { widgetSnippet } from "@/lib/workspace/widgetSnippet";
 export default function Settings() {
   const { workspace, role, refresh } = useWorkspace();
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [newOrigin, setNewOrigin] = useState("");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -102,7 +104,17 @@ export default function Settings() {
         </CardContent>
       </Card>
 
-      {role && user && <TeamCard workspaceId={workspace.id} ownRole={role} ownUid={user.uid} />}
+      {role && user && (
+        <TeamCard
+          workspaceId={workspace.id}
+          ownRole={role}
+          ownUid={user.uid}
+          onLeft={() => {
+            void refresh();
+            navigate("/onboarding", { replace: true });
+          }}
+        />
+      )}
 
       <Card>
         <CardHeader>

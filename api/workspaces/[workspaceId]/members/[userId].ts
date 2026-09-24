@@ -5,8 +5,8 @@ import { getPathParam, parseBody, safeServerError } from "../../../../src/lib/ht
 import { checkRateLimit } from "../../../../src/lib/http/rateLimit.js";
 import { UpdateMemberSchema } from "../../../../src/lib/validation/member.js";
 import { recordAuditEvent } from "../../../../src/lib/audit/log.js";
-import { canManageMemberRole, wouldRemoveLastOwner } from "../../../../src/server/members/memberPolicy.js";
-import { workspaceMemberDocId, type WorkspaceMember } from "../../../../src/types/workspace.js";
+import { canManageMemberRole } from "../../../../src/server/members/memberPolicy.js";
+import { applyMemberUpdate } from "../../../../src/server/members/memberService.js";
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== "PATCH") {
@@ -20,7 +20,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   // Only an admin+ may change a role or disable a membership at all; the
   // finer-grained "admin can't touch another admin/owner" check happens
-  // below, against the target's actual current role.
+  // in applyMemberUpdate's `authorize`, against the target's actual
+  // current role.
   const ctx = await requireWorkspaceRole(req, res, workspaceId, "admin");
   if (!ctx) return;
 
@@ -34,33 +35,21 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (!db) return res.status(503).json({ error: "database_not_configured" });
 
   try {
-    const ref = db.collection("workspaceMembers").doc(workspaceMemberDocId(workspaceId, userId));
-    const doc = await ref.get();
-    if (!doc.exists) return res.status(404).json({ error: "member_not_found" });
-    const target = doc.data() as WorkspaceMember;
+    const result = await applyMemberUpdate({
+      db,
+      workspaceId,
+      targetUserId: userId,
+      patch: input,
+      authorize: (target) => canManageMemberRole(ctx.role, target.role, input.role),
+    });
 
-    if (!canManageMemberRole(ctx.role, target.role, input.role)) {
+    if (result.code === "member_not_found") return res.status(404).json({ error: "member_not_found" });
+    if (result.code === "forbidden") {
       return res.status(403).json({ error: "insufficient_role", message: "Only an owner can manage admin or owner memberships." });
     }
-
-    const wasActiveOwner = target.role === "owner" && target.status === "active";
-    if (wasActiveOwner) {
-      const ownersSnapshot = await db
-        .collection("workspaceMembers")
-        .where("workspaceId", "==", workspaceId)
-        .where("role", "==", "owner")
-        .where("status", "==", "active")
-        .get();
-      const remainingActiveOwners = ownersSnapshot.docs.filter((d) => d.id !== ref.id).length;
-      if (wouldRemoveLastOwner({ targetWasActiveOwner: true, remainingActiveOwners, nextRole: input.role, nextStatus: input.status })) {
-        return res.status(409).json({ error: "last_owner", message: "A workspace must keep at least one active owner." });
-      }
+    if (result.code === "last_owner") {
+      return res.status(409).json({ error: "last_owner", message: "A workspace must keep at least one active owner." });
     }
-
-    const patch: Record<string, unknown> = {};
-    if (input.role !== undefined) patch.role = input.role;
-    if (input.status !== undefined) patch.status = input.status;
-    await ref.update(patch);
 
     await recordAuditEvent({
       workspaceId,
@@ -73,7 +62,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       },
     });
 
-    return res.status(200).json({ member: { ...target, ...patch } });
+    return res.status(200).json({ member: { ...result.target, ...result.patch } });
   } catch (error) {
     return safeServerError(res, "PATCH /api/workspaces/:id/members/:userId", error);
   }

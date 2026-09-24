@@ -20,7 +20,8 @@ export type AuditEventName =
   | "member_invite_revoked"
   | "member_invite_accepted"
   | "member_role_changed"
-  | "member_status_changed";
+  | "member_status_changed"
+  | "member_left";
 
 /** Firestore path: workspaces/{workspaceId}/auditLogs/{entryId} */
 export interface AuditLogEntry {
