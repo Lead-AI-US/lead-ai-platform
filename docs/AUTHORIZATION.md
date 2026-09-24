@@ -115,6 +115,31 @@ through the API above, which does role checks rules alone can't express
 (e.g. "admin to approve knowledge" vs. "member to create a lead") plus audit
 logging and analytics tracking. See `docs/SECURITY.md`.
 
+## Automations: not yet a live feature (found auditing `automationRunner.ts`)
+
+`runAutomationForEvent` is never called anywhere in this codebase outside
+its own file — no webhook, no `api/chat.ts` hook, nothing invokes it.
+There is also no API route that creates or updates an `Automation`
+document (no `api/workspaces/:id/automations*`), and the automations
+dashboard (`src/pages/app/Automations.tsx`) is read-only (`onSnapshot`
+only) with a purely illustrative, non-functional "templates" tab. The
+whole feature is scaffolding — types, the runner, a read-only view — not
+a live path a real user or event can reach today.
+
+Because of that, a real reliability bug in the runner has zero live
+impact right now, but is worth recording before someone wires this up:
+`proposalFromAutomationAction()` always sets `approvedBy: undefined`
+(the `type === "schedule_followup" ? undefined : undefined` ternary
+evaluates to `undefined` on every branch), so any automation configured
+with a medium-risk action (`schedule_followup`, `update_lead_stage`) can
+never pass `evaluateActionPolicy`'s approval gate and would always land
+in `pending_approval`/`failed` — never `completed`. Deliberately not
+fixed speculatively: the right design (does creating/enabling an
+Automation itself require admin+ and implicitly pre-approve its own
+configured actions? a distinct "system-approved" flag separate from a
+human `approvedBy`?) depends on decisions — an automation-creation route
+with its own authorization model — that don't exist yet.
+
 ## Known gaps (honest, not silently deferred)
 
 - **No email is actually sent for an invite.** No email provider is
