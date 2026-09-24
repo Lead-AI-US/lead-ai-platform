@@ -5,18 +5,24 @@ document's bug-by-bug narrative (7 fixed Firestore-undefined bugs, the
 full emulator/e2e harness design) is not repeated here. This pass
 re-verified all three repos' local state was exactly as that document
 and the marketing/audit repos' own histories claimed (nothing had
-drifted), then closed two of its three explicitly deferred findings.
+drifted), then closed three of its four explicitly deferred findings.
 
 ## Repo / branch / commit status (re-verified, not assumed)
 
 | Repo | Branch | Ahead of origin/main | Pushed? | Open PR? |
 |---|---|---|---|---|
-| `Arungharami/leadai.us` (marketing) | `feat/pilot-funnel-release` | 7 | No | No (existing `#8` on a different branch, untouched) |
-| `Lead-AI-US/lead-ai-business-audit` | `fix/admin-auth-and-firestore-rules` | 2 | No | No |
-| `Lead-AI-US/lead-ai-platform` | `feat/p0-real-pilot-core-loop` | 4 (2 from this pass) | No | No |
+| `Arungharami/leadai.us` (marketing) | `feat/pilot-funnel-release` | 7 | **Yes** | No (existing `#8` on a different branch, untouched) |
+| `Lead-AI-US/lead-ai-business-audit` | `fix/admin-auth-and-firestore-rules` | 2 | **Yes** | No — PR not opened, awaiting authorization |
+| `Lead-AI-US/lead-ai-platform` | `feat/p0-real-pilot-core-loop` | 5 (3 from this pass) | **Yes** | No — PR not opened, awaiting authorization |
 
-None of the three branches has ever been pushed. All three working
-trees are clean as of this doc.
+All three branches were pushed this pass, once authorized: the account's
+GitHub email-privacy setting was blocking pushes from all three (commits
+used a personal email), so the unpushed commits' author/committer email
+was rewritten to the account's GitHub-issued noreply address via git
+plumbing (`commit-tree` + `update-ref`, not `filter-branch`/`rebase`) —
+verified tree-identical to the originals before moving any branch ref,
+working trees untouched throughout. All three working trees are clean
+as of this doc.
 
 ## What this pass verified and closed
 
@@ -47,28 +53,41 @@ not inferred from a code read alone.
    `artifacts/pilot-journey/owner-leads-inbox-mobile.png`, which now
    shows the lead fully readable at the same 390px viewport the prior
    screenshot showed clipped. `git log -1 f0ec39e`.
+3. **No rate limiting on authenticated dashboard API routes**
+   (`docs/SECURITY.md`'s own "known simplifications", `P0_BASELINE.md`'s
+   deferred-findings list). Audited every file under `api/`: `chat.ts`,
+   `search.ts`, `agent/test.ts` and `actions/index.ts` already had it;
+   the other ten routes (workspace create/settings, lead
+   list/create/status, knowledge list/create/approve, action
+   simulation, both analytics endpoints, integration health) didn't.
+   Added the existing `checkRateLimit()` to all ten. Verified two ways
+   against the real emulator: the full e2e suite still passes (the new
+   limits don't false-positive on real dashboard traffic), and a
+   separate direct call proved the mechanism itself blocks once
+   exceeded (limit=5 allowed exactly 5 calls, blocked the 6th).
+   `git log -1 f63670f`.
 
 `npm run typecheck`, `npm run lint` (2 pre-existing warnings, 0 errors),
-`npm test` (123/123), and `npm run build` all re-run clean after both
-fixes.
+`npm test` (123/123), and `npm run build` all re-run clean after every
+fix in this pass.
 
 ## Still open, not attempted this pass
 
-Everything else `P0_BASELINE.md` listed as blocked or deferred is
-unchanged and still accurate: `actionService.ts`'s `targetExistsForProposal`
-/ policy layer itself was not re-audited beyond the field-shape fix; no
-rate limiting on authenticated dashboard routes; no team-invite/role
-routes; live OpenAI model behavior and a live Firebase project are both
-still genuinely unverified (no credentials in this environment); the
-marketing → platform funnel still links nowhere real, because the
-platform has never been deployed.
-
-Not attempted this pass (out of scope for what's independently
-verifiable without credentials or authorization): the Phase 1 hero
-copy/headline change this iteration's prompt suggests, billing/payment
-work, live deployment of any of the three repos, or pushing/opening PRs
-for any branch — all local-only per "never push without authorization"
-until explicitly approved.
+- **No team-invite/role-change routes** (`docs/AUTHORIZATION.md`'s own
+  "known gaps") — a net-new feature (API routes, Firestore writes, an
+  invite-acceptance flow, likely a UI panel), not a bug fix, so
+  deliberately not started without a direction check.
+- `actionService.ts`'s `targetExistsForProposal`/policy layer itself was
+  not re-audited beyond the field-shape fix.
+- Live OpenAI model behavior and a live Firebase project are both still
+  genuinely unverified (no credentials in this environment).
+- The marketing → platform funnel still links nowhere real, because the
+  platform has never been deployed.
+- Not attempted (out of scope for what's independently verifiable
+  without credentials or authorization): the Phase 1 hero copy/headline
+  change this iteration's prompt suggests, billing/payment work, live
+  deployment of any of the three repos, or opening pull requests for the
+  now-pushed branches.
 
 ## What a human needs to do before this goes further
 
