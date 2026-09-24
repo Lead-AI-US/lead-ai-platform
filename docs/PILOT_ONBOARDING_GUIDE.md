@@ -87,7 +87,19 @@ alerting is a reasonable P1 addition, not built yet — don't promise it.)
 5. Open the real website and confirm the chat bubble appears in the
    bottom-right corner.
 
-## 6. Data privacy and consent
+## 6. Inviting other staff (optional)
+
+If more than one person needs dashboard access (e.g. a manager who'll
+check leads alongside the owner), use **Settings → Team**: invite by
+email and role (`admin` can manage knowledge/settings/team; `member` can
+work leads/conversations; `viewer` is read-only). No email is sent
+automatically — copy the generated link after inviting and share it
+yourself (text, email, whatever's easiest). The workspace always keeps
+at least one active owner; if the owner ever needs to step back, promote
+someone else to owner first, then use **Leave workspace** on their own
+account.
+
+## 7. Data privacy and consent
 
 - Tell the customer, in your own website's privacy policy or a note near
   the chat widget, that messages are processed by Lead.AI to answer
@@ -132,3 +144,25 @@ Run through this with the owner present, on their own phone if possible:
       (no alerts yet) and knows where the Leads and Inbox pages are.
 - [ ] The owner has read and understood "What this pilot does not do"
       above.
+
+## First-month results review
+
+Schedule this when you onboard, don't wait to be asked. ~30 minutes,
+roughly 4 weeks after the widget goes live on the real site.
+
+- Pull real numbers from the **Analytics** page (or Leads/Inbox
+  directly if analytics data looks sparse): conversations started,
+  leads captured, handoffs requested, and how many leads the owner
+  actually followed up on (status moved past "new").
+- Ask the owner directly: has anything the AI said been wrong,
+  confusing, or missing? Turn every answer into a new or corrected
+  knowledge entry on the spot if you can.
+- Ask whether the "check the dashboard manually" workflow (§4) is
+  actually happening, or if missed leads are piling up unread — if so,
+  that's the strongest signal to prioritize real notification/alerting
+  as the next build, not another feature.
+- Write down real numbers, not impressions — they're what the
+  commercial-launch cost/pricing model (`docs/production/COMMERCIAL_LAUNCH_PLAN.md`)
+  should get replaced with once they exist. Do not extrapolate a single
+  pilot's results into a marketing claim or a testimonial without the
+  owner's explicit, separate permission to use their name.
