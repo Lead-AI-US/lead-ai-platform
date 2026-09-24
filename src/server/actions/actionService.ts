@@ -43,25 +43,33 @@ export async function proposeAction(params: {
 
   const now = new Date().toISOString();
   const actionRef = db.collection("workspaces").doc(proposal.workspaceId).collection("agentActions").doc();
+  const leadId = "leadId" in proposal ? proposal.leadId : undefined;
+  const failureCode = policy.allowed ? undefined : policy.code;
   const action: AgentAction = {
     id: actionRef.id,
     workspaceId: proposal.workspaceId,
     type: proposal.type,
     status: policy.allowed ? "validated" : policy.requiresApproval ? "pending_approval" : "failed",
     risk,
-    customerId: proposal.customerId,
-    leadId: "leadId" in proposal ? proposal.leadId : undefined,
-    conversationId: proposal.conversationId,
-    sourceEventId: proposal.sourceEventId,
-    automationRunId: proposal.automationRunId,
+    // Firestore rejects `undefined` field values outright (recursively,
+    // so `proposedBy.id` needs the same guard), and a proposal only ever
+    // has a subset of these optional fields — see the identical note in
+    // eventService.ts's recordEvent.
+    ...(proposal.customerId ? { customerId: proposal.customerId } : {}),
+    ...(leadId ? { leadId } : {}),
+    ...(proposal.conversationId ? { conversationId: proposal.conversationId } : {}),
+    ...(proposal.sourceEventId ? { sourceEventId: proposal.sourceEventId } : {}),
+    ...(proposal.automationRunId ? { automationRunId: proposal.automationRunId } : {}),
     idempotencyKey: proposal.idempotencyKey,
-    proposedBy: proposal.proposedBy,
-    rationale: proposal.rationale,
+    proposedBy: proposal.proposedBy.id
+      ? proposal.proposedBy
+      : { type: proposal.proposedBy.type },
+    ...(proposal.rationale ? { rationale: proposal.rationale } : {}),
     requiresApproval: policy.requiresApproval,
-    approvedBy: proposal.approvedBy,
+    ...(proposal.approvedBy ? { approvedBy: proposal.approvedBy } : {}),
     createdAt: now,
     updatedAt: now,
-    failureCode: policy.allowed ? undefined : policy.code,
+    ...(failureCode ? { failureCode } : {}),
     payload: sanitizeActionPayload(proposal.payload),
   };
 
@@ -116,7 +124,7 @@ export async function proposeAction(params: {
     status: execution.ok ? "completed" : "failed",
     completedAt,
     updatedAt: completedAt,
-    failureCode: execution.failureCode,
+    ...(execution.failureCode ? { failureCode: execution.failureCode } : {}),
   });
   await recordAuditEvent({
     workspaceId: action.workspaceId,
