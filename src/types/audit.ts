@@ -15,7 +15,13 @@ export type AuditEventName =
   | "automation_disabled"
   | "agent_configuration_changed"
   | "integration_changed"
-  | "workspace_settings_changed";
+  | "workspace_settings_changed"
+  | "member_invited"
+  | "member_invite_revoked"
+  | "member_invite_accepted"
+  | "member_role_changed"
+  | "member_status_changed"
+  | "member_left";
 
 /** Firestore path: workspaces/{workspaceId}/auditLogs/{entryId} */
 export interface AuditLogEntry {

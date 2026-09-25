@@ -3,6 +3,7 @@ import { getAdminDb } from "../../src/lib/firebase/admin.js";
 import { requireFirebaseUser } from "../../src/lib/auth/serverAuth.js";
 import { OnboardingSchema, slugify } from "../../src/lib/validation/onboarding.js";
 import { parseBody, safeServerError } from "../../src/lib/http/apiHelpers.js";
+import { checkRateLimit } from "../../src/lib/http/rateLimit.js";
 import { generatePublicWidgetKey } from "../../src/lib/workspace/widgetKey.js";
 import { workspaceMemberDocId, type Workspace, type WorkspaceMember } from "../../src/types/workspace.js";
 import { trackEvent } from "../../src/lib/analytics/track.js";
@@ -23,6 +24,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const user = await requireFirebaseUser(req, res);
   if (!user) return;
 
+  // No workspace exists yet -- this route creates the first one -- so the
+  // rate limiter's per-workspace Firestore path is keyed on a fixed
+  // sentinel instead, scoped per user rather than per workspace.
+  const rateLimit = await checkRateLimit("_global", `create-workspace:${user.uid}`, 10);
+  if (!rateLimit.allowed) return res.status(429).json({ error: "rate_limited" });
+
   const input = parseBody(req, res, OnboardingSchema);
   if (!input) return;
 
@@ -42,7 +49,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       timezone: input.timezone,
       businessType: input.businessType,
       primaryGoal: input.primaryGoal,
-      websiteDomain: input.websiteDomain,
+      // websiteDomain is optional (a new business may not have a site yet).
+      // Firestore rejects `undefined` field values outright, so it must be
+      // omitted entirely rather than set to undefined.
+      ...(input.websiteDomain ? { websiteDomain: input.websiteDomain } : {}),
       publicWidgetKey: generatePublicWidgetKey(),
       allowedOrigins: [],
       createdAt: now,
@@ -54,6 +64,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const member: WorkspaceMember = {
       workspaceId: workspaceRef.id,
       userId: user.uid,
+      ...(user.email ? { email: user.email } : {}),
       role: "owner",
       status: "active",
       createdAt: now,

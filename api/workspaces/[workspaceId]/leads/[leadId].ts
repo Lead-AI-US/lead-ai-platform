@@ -2,6 +2,7 @@ import type { VercelRequest, VercelResponse } from "@vercel/node";
 import { getAdminDb } from "../../../../src/lib/firebase/admin.js";
 import { requireWorkspaceRole } from "../../../../src/lib/auth/serverAuth.js";
 import { getPathParam, parseBody, safeServerError } from "../../../../src/lib/http/apiHelpers.js";
+import { checkRateLimit } from "../../../../src/lib/http/rateLimit.js";
 import { UpdateLeadStatusSchema } from "../../../../src/lib/validation/lead.js";
 import { recordAuditEvent } from "../../../../src/lib/audit/log.js";
 import { recordEvent } from "../../../../src/server/events/eventService.js";
@@ -19,6 +20,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   const ctx = await requireWorkspaceRole(req, res, workspaceId, "member");
   if (!ctx) return;
+
+  const rateLimit = await checkRateLimit(workspaceId, `${workspaceId}:lead-status:${ctx.uid}`, 60);
+  if (!rateLimit.allowed) return res.status(429).json({ error: "rate_limited" });
 
   const input = parseBody(req, res, UpdateLeadStatusSchema);
   if (!input) return;

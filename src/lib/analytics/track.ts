@@ -68,7 +68,12 @@ export async function trackEvent(params: {
       workspaceId: params.workspaceId.trim(),
       eventName: params.eventName,
       actorType: params.actorType,
-      actorId: params.actorId,
+      // Firestore rejects `undefined` field values outright, and every
+      // visitor-triggered call in api/chat.ts (lead_created,
+      // conversation_started, assistant_response_generated/failed,
+      // handoff_requested) omits actorId entirely — see the identical
+      // note in eventService.ts's recordEvent.
+      ...(params.actorId ? { actorId: params.actorId } : {}),
       properties: filterProperties(params.properties),
       isTest: params.isTest ?? false,
       occurredAt: new Date().toISOString(),

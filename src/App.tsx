@@ -7,6 +7,7 @@ import AppLayout from "@/app/AppLayout";
 
 const Login = lazy(() => import("@/pages/Login"));
 const Signup = lazy(() => import("@/pages/Signup"));
+const AcceptInvite = lazy(() => import("@/pages/AcceptInvite"));
 const Onboarding = lazy(() => import("@/pages/Onboarding"));
 const NotFound = lazy(() => import("@/pages/NotFound"));
 const Dashboard = lazy(() => import("@/pages/app/Dashboard"));
@@ -33,6 +34,7 @@ export default function App() {
               <Route path="/" element={<Navigate to="/app" replace />} />
               <Route path="/login" element={<Login />} />
               <Route path="/signup" element={<Signup />} />
+              <Route path="/accept-invite" element={<AcceptInvite />} />
 
               <Route element={<RequireAuthOnly />}>
                 <Route path="/onboarding" element={<Onboarding />} />

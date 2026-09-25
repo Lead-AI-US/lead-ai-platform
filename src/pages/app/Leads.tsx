@@ -90,58 +90,102 @@ export default function Leads() {
       ) : filtered?.length === 0 ? (
         <EmptyState icon={Users} title="No leads yet" description="Leads captured by your website chat will show up here." />
       ) : (
-        <Card className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead className="border-b border-border text-left text-muted-foreground">
-              <tr>
-                <th className="p-3 font-medium">Name / contact</th>
-                <th className="p-3 font-medium">Message</th>
-                <th className="p-3 font-medium">Source</th>
-                <th className="p-3 font-medium">Conversation</th>
-                <th className="p-3 font-medium">Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filtered?.map((lead) => (
-                <tr key={lead.id} className="border-b border-border last:border-0">
-                  <td className="p-3">
+        <>
+          {/* Below sm: a table clips or forces horizontal scroll on a
+              5-column row at 390px, so leads render as stacked cards
+              instead -- no scrolling needed to read a lead's status. */}
+          <div className="grid min-w-0 gap-3 sm:hidden" data-testid="leads-mobile-list">
+            {filtered?.map((lead) => (
+              <Card key={lead.id} className="min-w-0 p-3">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
                     <div className="font-medium">{lead.name || "—"}</div>
-                    <div className="text-xs text-muted-foreground">{lead.email || lead.phone || "no contact info"}</div>
-                  </td>
-                  <td className="max-w-xs truncate p-3 text-muted-foreground">{lead.message || "—"}</td>
-                  <td className="p-3">
-                    <Badge>{lead.source === "website_chat" ? "Website chat" : "Manual"}</Badge>
-                  </td>
-                  <td className="p-3">
-                    {lead.conversationId ? (
-                      <Link to="/app/inbox" className="text-xs font-medium text-primary underline">
-                        Open inbox
-                      </Link>
-                    ) : (
-                      <span className="text-xs text-muted-foreground">No conversation</span>
-                    )}
-                  </td>
-                  <td className="p-3">
-                    <select
-                      value={lead.status}
-                      onChange={(e) => void updateStatus(lead.id, e.target.value as LeadStatus)}
-                      className="rounded-md border border-border bg-background px-2 py-1 text-xs"
-                    >
-                      {LEAD_STATUSES.map((s) => (
-                        <option key={s} value={s}>
-                          {s}
-                        </option>
-                      ))}
-                    </select>
-                    <Badge tone={STATUS_TONE[lead.status]} className="ml-2 hidden sm:inline-flex">
-                      {lead.status}
-                    </Badge>
-                  </td>
+                    <div className="break-words text-xs text-muted-foreground">{lead.email || lead.phone || "no contact info"}</div>
+                  </div>
+                  <Badge tone={STATUS_TONE[lead.status]} className="shrink-0">{lead.status}</Badge>
+                </div>
+                {lead.message && <p className="mt-2 break-words text-sm text-muted-foreground">{lead.message}</p>}
+                <div className="mt-3 flex flex-wrap items-center gap-2">
+                  <Badge>{lead.source === "website_chat" ? "Website chat" : "Manual"}</Badge>
+                  {lead.conversationId ? (
+                    <Link to="/app/inbox" className="text-xs font-medium text-primary underline">
+                      Open inbox
+                    </Link>
+                  ) : (
+                    <span className="text-xs text-muted-foreground">No conversation</span>
+                  )}
+                </div>
+                <label className="mt-3 block text-xs">
+                  <span className="sr-only">Status for {lead.name || "this lead"}</span>
+                  <select
+                    value={lead.status}
+                    onChange={(e) => void updateStatus(lead.id, e.target.value as LeadStatus)}
+                    className="w-full rounded-md border border-border bg-background px-2 py-2 text-sm"
+                  >
+                    {LEAD_STATUSES.map((s) => (
+                      <option key={s} value={s}>
+                        {s}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              </Card>
+            ))}
+          </div>
+
+          <Card className="hidden overflow-x-auto sm:block">
+            <table className="w-full text-sm">
+              <thead className="border-b border-border text-left text-muted-foreground">
+                <tr>
+                  <th className="p-3 font-medium">Name / contact</th>
+                  <th className="p-3 font-medium">Message</th>
+                  <th className="p-3 font-medium">Source</th>
+                  <th className="p-3 font-medium">Conversation</th>
+                  <th className="p-3 font-medium">Status</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </Card>
+              </thead>
+              <tbody>
+                {filtered?.map((lead) => (
+                  <tr key={lead.id} className="border-b border-border last:border-0">
+                    <td className="p-3">
+                      <div className="font-medium">{lead.name || "—"}</div>
+                      <div className="text-xs text-muted-foreground">{lead.email || lead.phone || "no contact info"}</div>
+                    </td>
+                    <td className="max-w-xs truncate p-3 text-muted-foreground">{lead.message || "—"}</td>
+                    <td className="p-3">
+                      <Badge>{lead.source === "website_chat" ? "Website chat" : "Manual"}</Badge>
+                    </td>
+                    <td className="p-3">
+                      {lead.conversationId ? (
+                        <Link to="/app/inbox" className="text-xs font-medium text-primary underline">
+                          Open inbox
+                        </Link>
+                      ) : (
+                        <span className="text-xs text-muted-foreground">No conversation</span>
+                      )}
+                    </td>
+                    <td className="p-3">
+                      <select
+                        value={lead.status}
+                        onChange={(e) => void updateStatus(lead.id, e.target.value as LeadStatus)}
+                        className="rounded-md border border-border bg-background px-2 py-1 text-xs"
+                      >
+                        {LEAD_STATUSES.map((s) => (
+                          <option key={s} value={s}>
+                            {s}
+                          </option>
+                        ))}
+                      </select>
+                      <Badge tone={STATUS_TONE[lead.status]} className="ml-2 hidden sm:inline-flex">
+                        {lead.status}
+                      </Badge>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </Card>
+        </>
       )}
     </div>
   );

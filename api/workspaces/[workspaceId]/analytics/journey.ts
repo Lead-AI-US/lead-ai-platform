@@ -3,6 +3,7 @@ import type { Query, DocumentData } from "firebase-admin/firestore";
 import { getAdminDb } from "../../../../src/lib/firebase/admin.js";
 import { requireWorkspaceRole } from "../../../../src/lib/auth/serverAuth.js";
 import { getPathParam, safeServerError } from "../../../../src/lib/http/apiHelpers.js";
+import { checkRateLimit } from "../../../../src/lib/http/rateLimit.js";
 import { parseTimeRange, cutoffIsoForRange } from "../../../../src/lib/analytics/timeRange.js";
 import type { BusinessEvent, BusinessEventType } from "../../../../src/types/event.js";
 
@@ -29,6 +30,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   const ctx = await requireWorkspaceRole(req, res, workspaceId, "viewer");
   if (!ctx) return;
+
+  const rateLimit = await checkRateLimit(workspaceId, `${workspaceId}:analytics-journey:${ctx.uid}`, 30);
+  if (!rateLimit.allowed) return res.status(429).json({ error: "rate_limited" });
 
   const db = getAdminDb();
   if (!db) return res.status(503).json({ error: "database_not_configured" });

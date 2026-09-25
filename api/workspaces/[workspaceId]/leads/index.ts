@@ -2,6 +2,7 @@ import type { VercelRequest, VercelResponse } from "@vercel/node";
 import { getAdminDb } from "../../../../src/lib/firebase/admin.js";
 import { requireWorkspaceRole } from "../../../../src/lib/auth/serverAuth.js";
 import { getPathParam, parseBody, safeServerError } from "../../../../src/lib/http/apiHelpers.js";
+import { checkRateLimit } from "../../../../src/lib/http/rateLimit.js";
 import { CreateLeadSchema } from "../../../../src/lib/validation/lead.js";
 import type { Lead } from "../../../../src/types/lead.js";
 
@@ -19,6 +20,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 async function handleList(req: VercelRequest, res: VercelResponse, workspaceId: string) {
   const ctx = await requireWorkspaceRole(req, res, workspaceId, "viewer");
   if (!ctx) return;
+
+  const rateLimit = await checkRateLimit(workspaceId, `${workspaceId}:leads-list:${ctx.uid}`, 60);
+  if (!rateLimit.allowed) return res.status(429).json({ error: "rate_limited" });
 
   const db = getAdminDb();
   if (!db) return res.status(503).json({ error: "database_not_configured" });
@@ -43,6 +47,9 @@ async function handleCreate(req: VercelRequest, res: VercelResponse, workspaceId
   const ctx = await requireWorkspaceRole(req, res, workspaceId, "member");
   if (!ctx) return;
 
+  const rateLimit = await checkRateLimit(workspaceId, `${workspaceId}:leads-create:${ctx.uid}`, 30);
+  if (!rateLimit.allowed) return res.status(429).json({ error: "rate_limited" });
+
   const input = parseBody(req, res, CreateLeadSchema);
   if (!input) return;
 
@@ -56,12 +63,15 @@ async function handleCreate(req: VercelRequest, res: VercelResponse, workspaceId
       id: ref.id,
       workspaceId,
       source: input.source,
-      customerId: input.customerId,
-      name: input.name,
-      email: input.email,
-      phone: input.phone,
-      message: input.message,
-      conversationId: input.conversationId,
+      // Every one of these is optional in CreateLeadSchema — Firestore
+      // rejects `undefined` field values outright, so each must be
+      // omitted entirely rather than set to undefined.
+      ...(input.customerId ? { customerId: input.customerId } : {}),
+      ...(input.name ? { name: input.name } : {}),
+      ...(input.email ? { email: input.email } : {}),
+      ...(input.phone ? { phone: input.phone } : {}),
+      ...(input.message ? { message: input.message } : {}),
+      ...(input.conversationId ? { conversationId: input.conversationId } : {}),
       status: "new",
       stage: "new",
       createdAt: now,

@@ -18,7 +18,11 @@ export async function recordAuditEvent(params: {
       workspaceId: params.workspaceId,
       event: params.event,
       actorUid: params.actorUid,
-      detail: params.detail,
+      // Firestore rejects `undefined` field values outright; most callers
+      // (e.g. api/workspaces/index.ts's workspace_created event) don't pass
+      // detail, so it must be omitted entirely rather than set to
+      // undefined, or every such call silently fails in the catch below.
+      ...(params.detail ? { detail: params.detail } : {}),
       createdAt: new Date().toISOString(),
     };
     await db

@@ -70,7 +70,9 @@ export async function runAutomationForEvent(params: {
     status,
     actionsAttempted: params.automation.actions.length,
     actionsCompleted: completed,
-    failureCode: status === "completed" ? undefined : "AUTOMATION_EXECUTION_FAILED",
+    // Firestore rejects `undefined` field values outright, so on success
+    // this key must be omitted entirely rather than set to undefined.
+    ...(status === "completed" ? {} : { failureCode: "AUTOMATION_EXECUTION_FAILED" as const }),
     completedAt,
   } satisfies Partial<AutomationRun>;
   await runRef.update(patch);
@@ -112,10 +114,14 @@ function createRun(
     status,
     actionsAttempted: 0,
     actionsCompleted: 0,
-    failureCode,
+    // Firestore rejects `undefined` field values outright — see the
+    // identical note in eventService.ts's recordEvent. `failureCode` is
+    // absent on a "running" run, and `completedAt` isn't set until the
+    // run leaves "running".
+    ...(failureCode ? { failureCode } : {}),
     retryCount: 0,
     startedAt: now,
-    completedAt: status === "running" ? undefined : now,
+    ...(status === "running" ? {} : { completedAt: now }),
   };
 }
 

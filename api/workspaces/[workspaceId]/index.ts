@@ -2,6 +2,7 @@ import type { VercelRequest, VercelResponse } from "@vercel/node";
 import { getAdminDb } from "../../../src/lib/firebase/admin.js";
 import { requireWorkspaceRole } from "../../../src/lib/auth/serverAuth.js";
 import { getPathParam, parseBody, safeServerError } from "../../../src/lib/http/apiHelpers.js";
+import { checkRateLimit } from "../../../src/lib/http/rateLimit.js";
 import { UpdateWorkspaceSettingsSchema } from "../../../src/lib/validation/workspaceSettings.js";
 import { recordAuditEvent } from "../../../src/lib/audit/log.js";
 
@@ -17,6 +18,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   // Origin allowlist / status changes affect who can reach the widget - admin only.
   const ctx = await requireWorkspaceRole(req, res, workspaceId, "admin");
   if (!ctx) return;
+
+  const rateLimit = await checkRateLimit(workspaceId, `${workspaceId}:workspace-settings:${ctx.uid}`, 30);
+  if (!rateLimit.allowed) return res.status(429).json({ error: "rate_limited" });
 
   const input = parseBody(req, res, UpdateWorkspaceSettingsSchema);
   if (!input) return;

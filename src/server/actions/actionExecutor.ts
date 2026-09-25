@@ -42,15 +42,18 @@ async function createLead({ db, action, proposal, actorUid }: { db: Firestore; a
     id: ref.id,
     workspaceId: action.workspaceId,
     source: proposal.payload.source,
-    customerId: action.customerId,
-    conversationId: action.conversationId,
-    name: proposal.payload.name,
-    email: proposal.payload.email,
-    phone: proposal.payload.phone,
-    message: proposal.payload.message,
+    // Firestore rejects `undefined` field values outright, and a
+    // create_lead proposal only ever has a subset of these optional
+    // fields — see the identical note in eventService.ts's recordEvent.
+    ...(action.customerId ? { customerId: action.customerId } : {}),
+    ...(action.conversationId ? { conversationId: action.conversationId } : {}),
+    ...(proposal.payload.name ? { name: proposal.payload.name } : {}),
+    ...(proposal.payload.email ? { email: proposal.payload.email } : {}),
+    ...(proposal.payload.phone ? { phone: proposal.payload.phone } : {}),
+    ...(proposal.payload.message ? { message: proposal.payload.message } : {}),
     status: "new",
     stage: "new",
-    intent: proposal.payload.intent,
+    ...(proposal.payload.intent ? { intent: proposal.payload.intent } : {}),
     createdAt: now,
     updatedAt: now,
   };

@@ -28,9 +28,14 @@ export async function upsertWebsiteCustomer(params: {
   const createPayload: Customer = {
     id,
     workspaceId: params.workspaceId,
-    displayName: params.displayName,
-    email: params.email,
-    phone: params.phone,
+    // Firestore rejects `undefined` field values outright — these are all
+    // genuinely optional (a visitor's first message rarely includes name,
+    // email, phone AND a detected intent), so each must be omitted
+    // entirely rather than set to undefined. Same pattern already used a
+    // few lines below in updatePayload.
+    ...(params.displayName ? { displayName: params.displayName } : {}),
+    ...(params.email ? { email: params.email } : {}),
+    ...(params.phone ? { phone: params.phone } : {}),
     source: "website_chat",
     preferredChannel: "website",
     tags: [],
@@ -38,7 +43,7 @@ export async function upsertWebsiteCustomer(params: {
     lastSeenAt: now,
     conversationCount: params.conversationDelta ?? 0,
     leadCount: params.leadDelta ?? 0,
-    latestIntent: params.intent,
+    ...(params.intent ? { latestIntent: params.intent } : {}),
     createdAt: now,
     updatedAt: now,
   };

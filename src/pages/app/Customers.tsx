@@ -53,37 +53,59 @@ export default function Customers() {
       ) : filtered?.length === 0 ? (
         <EmptyState icon={UserRound} title="No customers yet" description="Customers are created from real workspace conversations and leads." />
       ) : (
-        <Card className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead className="border-b border-border text-left text-muted-foreground">
-              <tr>
-                <th className="p-3 font-medium">Customer</th>
-                <th className="p-3 font-medium">Latest intent</th>
-                <th className="p-3 font-medium">Activity</th>
-                <th className="p-3 font-medium">Last seen</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filtered?.map((customer) => (
-                <tr key={customer.id} className="border-b border-border last:border-0">
-                  <td className="p-3">
-                    <Link to={`/app/customers/${customer.id}`} className="font-medium text-primary underline">
-                      {customer.displayName || customer.email || customer.phone || `Customer ${customer.id.slice(-6)}`}
-                    </Link>
-                    <div className="text-xs text-muted-foreground">{customer.preferredChannel ?? "website"}</div>
-                  </td>
-                  <td className="p-3">
-                    {customer.latestIntent ? <Badge tone="info">{customer.latestIntent}</Badge> : <span className="text-muted-foreground">Unknown</span>}
-                  </td>
-                  <td className="p-3 text-muted-foreground">
-                    {customer.conversationCount} conversations · {customer.leadCount} leads
-                  </td>
-                  <td className="p-3 text-muted-foreground">{formatDateTime(customer.lastSeenAt)}</td>
+        <>
+          {/* Below sm: stacked cards instead of a 4-column table, so
+              nothing clips or requires horizontal scrolling at 390px. */}
+          <div className="grid min-w-0 gap-3 sm:hidden" data-testid="customers-mobile-list">
+            {filtered?.map((customer) => (
+              <Card key={customer.id} className="min-w-0 p-3">
+                <Link to={`/app/customers/${customer.id}`} className="break-words font-medium text-primary underline">
+                  {customer.displayName || customer.email || customer.phone || `Customer ${customer.id.slice(-6)}`}
+                </Link>
+                <div className="text-xs text-muted-foreground">{customer.preferredChannel ?? "website"}</div>
+                <div className="mt-2 flex flex-wrap items-center gap-2">
+                  {customer.latestIntent ? <Badge tone="info">{customer.latestIntent}</Badge> : <span className="text-xs text-muted-foreground">Unknown intent</span>}
+                </div>
+                <div className="mt-2 text-xs text-muted-foreground">
+                  {customer.conversationCount} conversations · {customer.leadCount} leads
+                </div>
+                <div className="mt-1 text-xs text-muted-foreground">Last seen {formatDateTime(customer.lastSeenAt)}</div>
+              </Card>
+            ))}
+          </div>
+
+          <Card className="hidden overflow-x-auto sm:block">
+            <table className="w-full text-sm">
+              <thead className="border-b border-border text-left text-muted-foreground">
+                <tr>
+                  <th className="p-3 font-medium">Customer</th>
+                  <th className="p-3 font-medium">Latest intent</th>
+                  <th className="p-3 font-medium">Activity</th>
+                  <th className="p-3 font-medium">Last seen</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </Card>
+              </thead>
+              <tbody>
+                {filtered?.map((customer) => (
+                  <tr key={customer.id} className="border-b border-border last:border-0">
+                    <td className="p-3">
+                      <Link to={`/app/customers/${customer.id}`} className="font-medium text-primary underline">
+                        {customer.displayName || customer.email || customer.phone || `Customer ${customer.id.slice(-6)}`}
+                      </Link>
+                      <div className="text-xs text-muted-foreground">{customer.preferredChannel ?? "website"}</div>
+                    </td>
+                    <td className="p-3">
+                      {customer.latestIntent ? <Badge tone="info">{customer.latestIntent}</Badge> : <span className="text-muted-foreground">Unknown</span>}
+                    </td>
+                    <td className="p-3 text-muted-foreground">
+                      {customer.conversationCount} conversations · {customer.leadCount} leads
+                    </td>
+                    <td className="p-3 text-muted-foreground">{formatDateTime(customer.lastSeenAt)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </Card>
+        </>
       )}
     </div>
   );
